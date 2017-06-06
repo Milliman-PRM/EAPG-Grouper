@@ -14,7 +14,7 @@ Each subfolder in the repository should have an appropriate `ReadMe.md` file des
 
 ### Continuous integration
 
-CI has been enabled for this repository. It is currently limited to linting only of python scripts. Unit test requirements are relaxed because of limited nature of logic in python library
+CI has been enabled for this repository. Developers are encouraged to submit unit tests with any library code. A base level of test coverage is required
 
 ### Releases
 

@@ -1,4 +1,4 @@
-rem ### CODE OWNERS: Kyle Baird
+rem ### CODE OWNERS: Kyle Baird, Ben Copeland
 rem
 rem ### OBJECTIVE:
 rem   Configure environment for use so it can be utilized by multiple systems

@@ -1,0 +1,178 @@
+"""
+### CODE OWNERS: Ben Copeland
+
+### OBJECTIVE:
+  House methods or constants that may apply to various parts of the EAPG process
+
+### DEVELOPER NOTES:
+  <none>
+"""
+import logging
+import typing
+from pathlib import Path
+
+import pyspark.sql
+import pyspark.sql.functions as spark_funcs
+import pyspark.sql.types as spark_types
+from prm.spark.io_txt import build_structtype_from_csv
+
+LOGGER = logging.getLogger(__name__)
+
+DAYS_PER_YEAR = 365.25
+N_DIAG_COLUMNS = 12
+
+# pylint: disable=no-member
+
+# =============================================================================
+# LIBRARIES, LOCATIONS, LITERALS, ETC. GO ABOVE HERE
+# =============================================================================
+
+
+def _coalesce_metadata_and_cast(
+        struct: spark_types.StructType,
+        dataframe: pyspark.sql.DataFrame,
+    ) -> typing.Iterable:
+    """
+        Update the datamart schema from a dataframe schema for pass down to
+        aliasWithMetadata
+    """
+    meta_select = list()
+    for field in struct:
+        meta = field.metadata.copy()
+        meta.update(dataframe.schema[field.name].metadata)
+        meta_select.append(
+            spark_funcs.col(field.name).cast(field.dataType).aliasWithMetadata(
+                field.name,
+                metadata=meta,
+                )
+            )
+    return dataframe.select(meta_select)
+
+
+def get_standard_inputs_from_prm(
+        input_dataframes: "typing.Mapping[str, pyspark.sql.DataFrame]",
+        path_schema: Path=Path(r'C:\Users\ben.copeland\repos\EAPG-Grouper\python\eapg\schemas\eapgs_in.csv'),
+    ) -> pyspark.sql.DataFrame:
+    """Get the standard EAPG inputs from PRM ~public data sets"""
+    LOGGER.info("Creating standard EAPG software inputs from ~public PRM data")
+    struct = build_structtype_from_csv(
+        path_schema
+        )
+
+    LOGGER.info('Reformatting outclaims_prm into EAPG format')
+    df_decor = input_dataframes['outclaims_prm'].select(
+        spark_funcs.lit(None).alias('patientname'),
+        spark_funcs.lit(None).alias('accountnumber'),
+        spark_funcs.lit(None).alias('medicalrecordnumber'),
+        spark_funcs.col('providerid').alias('nationalprovideridentifier'),
+        spark_funcs.col('prm_fromdate').alias('admitdate'),
+        spark_funcs.col('prm_todate').alias('dischargedate'),
+        # birthdate joined from member
+        # ageinyears must be derived from dob/birthdate
+        # sex joined from member
+        spark_funcs.col('billtype').alias('typeofbill'),
+        spark_funcs.lit(None).alias('conditioncode'),
+        spark_funcs.col('dischargestatus'),
+        spark_funcs.lit(1).alias('userkey1'),
+        spark_funcs.lit(2).alias('userkey2'),
+        spark_funcs.lit(3).alias('userkey3'),
+        spark_funcs.col('mr_paid').alias('totalcharges'),
+        spark_funcs.col('icddiag1').alias('principaldiagnosis'),
+        spark_funcs.concat_ws(
+            ';',
+            *[
+                spark_funcs.col('icddiag{}'.format(i))
+                for i in range(2, N_DIAG_COLUMNS + 1)
+                ],
+            ).alias('secondarydiagnosis'),
+        spark_funcs.lit(None).alias('reasonforvisitdiagnosis'),
+        spark_funcs.col('hcpcs').alias('procedurehcpcs'),
+        spark_funcs.col('modifier').alias('itemmodifier1'),
+        spark_funcs.col('modifier2').alias('itemmodifier2'),
+        spark_funcs.lit(None).alias('itemmodifier3'),
+        spark_funcs.lit(None).alias('itemmodifier4'),
+        spark_funcs.lit(None).alias('itemmodifier5'),
+        spark_funcs.col('revcode').alias('itemrevenuecode'),
+        spark_funcs.col('units').alias('itemunitsofservice'),
+        spark_funcs.abs(spark_funcs.col('paid')).alias('itemcharges'),
+        spark_funcs.col('fromdate').alias('itemservicedate'),
+        spark_funcs.lit(0).alias('itemactionflag'),
+        spark_funcs.lit(None).alias('occurrencecode'),
+        spark_funcs.lit(None).alias('occurrencecodedate'),
+        spark_funcs.when(
+            spark_funcs.col('prm_line').startswith('P'),
+            1,
+            ).otherwise(0).alias('itemprofessionalserviceflag'),
+        spark_funcs.substring(
+            spark_funcs.col('icdversion'),
+            2,
+            1,
+            ).alias('icdversionqualifier'),
+        spark_funcs.when(
+            spark_funcs.col('poa1').isin('Y', 'W'),
+            spark_funcs.lit('Y')
+            ).otherwise('N').alias('principaldiagnosispoa'),
+        spark_funcs.concat_ws(
+            ';',
+            *[
+                spark_funcs.when(
+                    spark_funcs.col('poa{}'.format(i)).isin('Y', 'N', 'U', 'W'),
+                    spark_funcs.col('poa{}'.format(i))
+                    ).when(
+                        spark_funcs.col('poa{}'.format(i)) == '1',
+                        spark_funcs.lit('Y'),
+                        ).otherwise('N')
+                for i in range(2, N_DIAG_COLUMNS + 1)
+                ],
+            ).alias('secondarydiagnosispoa'),
+        spark_funcs.lit(None).alias('valuecode'),
+        spark_funcs.lit(None).alias('valuecodeamount'),
+        spark_funcs.lit(9).alias('admitpriority'),
+        (spark_funcs.col('allowed') - spark_funcs.col('billed')).alias('itemnoncoveredcharges'),
+        spark_funcs.lit(None).alias('filler_formerlypointoforigin'),
+        spark_funcs.col('providerzip').alias('providerzipcode'),
+        spark_funcs.lit(None).alias('itemndccode'),
+        spark_funcs.lit(None).alias('userdefinednumberofvisits'), # Maryland only
+        spark_funcs.col('prm_prv_id_operating').alias('operatingphysician'),
+        spark_funcs.col('member_id').alias('patientid'), # TODO: Ensure this is 40 chars in template
+        spark_funcs.lit(None).alias('externalcauseofinjurydiagnosis'),
+        spark_funcs.lit(None).alias('externalcauseofinjurydiagnosispoa'),
+        spark_funcs.lit(None).alias('drugcharges'), # Maryland only
+        spark_funcs.lit(None).alias('observationcharges'), # Maryland only
+        spark_funcs.lit(None).alias('observationunits'), # Maryland only
+        spark_funcs.lit(None).alias('supplycharges'), # Maryland only
+        spark_funcs.lit(None).alias('claimtype'), # Depends on state, MI or WI
+        spark_funcs.lit(None).alias('financialpayer'), # Depends on state, NY or WI
+        spark_funcs.lit(None).alias('memberbenefitplan'), # WI only
+        spark_funcs.col('patientpay').alias('itemcostshare'), # WI only
+        spark_funcs.col('pos').alias('itemplaceofservice'), # WI only
+    )
+
+    LOGGER.info('Joining member dimensions onto reformatted claims')
+    df_merge = df_decor.join(
+        input_dataframes['member'].select(
+            spark_funcs.col('member_id').alias('patientid'),
+            spark_funcs.col('gender').alias('sex'),
+            spark_funcs.col('dob').alias('birthdate'),
+            ),
+        'patientid',
+        how='left_outer'
+    ).withColumn(
+        'ageinyears',
+        spark_funcs.floor(
+            spark_funcs.datediff(
+                spark_funcs.col('admitdate'),
+                spark_funcs.col('birthdate')
+                ) / DAYS_PER_YEAR
+            ).alias('ageinyears'),
+    )
+
+    df_struct = _coalesce_metadata_and_cast(
+        struct,
+        df_merge
+        )
+
+    return df_struct
+
+if __name__ == 'main':
+    pass

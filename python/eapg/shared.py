@@ -21,6 +21,15 @@ LOGGER = logging.getLogger(__name__)
 DAYS_PER_YEAR = 365.25
 N_DIAG_COLUMNS = 12
 
+try:
+    _PATH_THIS_FILE = Path(__file__).parent
+except NameError: # pragma: no cover
+    # Likely running interactively for development
+    import eapg.shared # pylint: disable=wrong-import-position
+    _PATH_THIS_FILE = Path(eapg.shared.__file__).parent
+
+PATH_SCHEMAS = _PATH_THIS_FILE / 'schemas'
+
 # pylint: disable=no-member
 
 # =============================================================================
@@ -51,12 +60,13 @@ def _coalesce_metadata_and_cast(
 
 def get_standard_inputs_from_prm(
         input_dataframes: "typing.Mapping[str, pyspark.sql.DataFrame]",
-        path_schema: Path=Path(r'C:\Users\ben.copeland\repos\EAPG-Grouper\python\eapg\schemas\eapgs_in.csv'),
+        *,
+        path_schema_input: Path=PATH_SCHEMAS / 'eapgs_in.csv'
     ) -> pyspark.sql.DataFrame:
     """Get the standard EAPG inputs from PRM ~public data sets"""
     LOGGER.info("Creating standard EAPG software inputs from ~public PRM data")
     struct = build_structtype_from_csv(
-        path_schema
+        path_schema_input
         )
 
     LOGGER.info('Reformatting outclaims_prm into EAPG format')

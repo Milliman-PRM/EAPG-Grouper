@@ -9,6 +9,7 @@
 """
 import logging
 import typing
+import os
 from pathlib import Path
 
 import pyspark.sql
@@ -29,6 +30,11 @@ except NameError: # pragma: no cover
     _PATH_THIS_FILE = Path(eapg.shared.__file__).parent
 
 PATH_SCHEMAS = _PATH_THIS_FILE / 'schemas'
+PATH_EAPG_GROUPER = Path(r'C:\Program Files\3mhis\v2017.1.2\cgs\cgs_console.exe')
+
+PATH_TEMPLATES = Path(os.environ['eapg_grouper_home']) / 'templates'
+PATH_INPUT_TEMPLATE = PATH_TEMPLATES / 'prm_eapgs_in.2017.1.2'
+PATH_OUTPUT_TEMPLATE = PATH_TEMPLATES / 'prm_eapgs_out.2017.1.2'
 
 # pylint: disable=no-member
 

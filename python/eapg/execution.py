@@ -47,7 +47,7 @@ def _run_eapg_grouper_on_partition(# pylint: disable=too-many-locals
         path_logs_public: typing.Optional[Path]=None,
         cleanup_claim_copies: typing.Optional[bool]=True,
         **kwargs_eapg
-    ) -> None: # pragma: no cover
+    ) -> None:  # pragma: no cover
     """Execute the EAPG software on a single partition"""
 
     path_eapg_io = Path.cwd() / "eapg_grouper_io" / "part_{}".format(id_partition)
@@ -57,7 +57,6 @@ def _run_eapg_grouper_on_partition(# pylint: disable=too-many-locals
         )
     path_input_file = path_eapg_io / 'eapg_in.csv'
     path_output_file = path_workspace / 'eapgs_out_{}.csv'.format(id_partition)
-
 
     with path_input_file.open('w') as fh_input:
         for claim in iter_claims:
@@ -90,7 +89,6 @@ def _run_eapg_grouper_on_partition(# pylint: disable=too-many-locals
         check=True,
         )
 
-
     yield path_output_file.name
 
     if cleanup_claim_copies:
@@ -118,7 +116,6 @@ def run_eapg_grouper(
     path_workspace.mkdir(
         exist_ok=True,
         )
-
 
     rdd_claims = input_dataframes['claims'].rdd.mapPartitions(
         partial(

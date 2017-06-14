@@ -39,13 +39,56 @@ PATH_OUTPUT_TEMPLATE = PATH_TEMPLATES / 'prm_eapgs_out.2017.1.2.dic'
 # =============================================================================
 
 
+def _public_log_check(
+        id_partition: int,
+        path_logs_public: typing.Optional[Path],
+        options: typing.Dict
+    ) -> dict:
+    """ check if path_logs_public exists, """
+    LOGGER.debug("Checking Public_Log_Path_%s", str(id_partition))
+    if path_logs_public:
+        options['error_log'] = path_logs_public / 'error_log_{}.txt'.format(id_partition)
+        options['edit_log'] = path_logs_public / 'edit_log_{}.txt'.format(id_partition)
+    return options
+
+def _compose_options(
+        id_partition: int,
+        path_input_file: Path,
+        path_output_file: Path,
+        path_logs_public: typing.Optional[Path],
+        **kwargs_eapg
+    ) -> dict:
+    LOGGER.debug("Composing options dictionary for partition_%s", str(id_partition))
+
+    initial_options = {
+        'input': path_input_file.as_posix(),
+        'input_template': PATH_INPUT_TEMPLATE.as_posix(),
+        'upload': path_output_file.as_posix(),
+        'upload_template': PATH_OUTPUT_TEMPLATE.as_posix(),
+        'input_header': 'off',
+        'schedule': 'off',
+        'grouper': EAPG_VERSION,
+        'input_date_format': 'yyyy-MM-dd',
+        }
+    pub_log_options = _public_log_check(
+        id_partition,
+        path_logs_public,
+        initial_options
+    )
+    pub_log_options.update(**kwargs_eapg)
+
+    return pub_log_options
+
+
+
+
 def _run_eapg_grouper_on_partition(# pylint: disable=too-many-locals
         id_partition: int,
         iter_claims: "typing.Iterable[str]",
         *,
         path_workspace: Path,
         path_logs_public: typing.Optional[Path]=None,
-        cleanup_claim_copies: typing.Optional[bool]=True,
+        cleanup_claim_copies: bool=True,
         **kwargs_eapg
     ) -> None:  # pragma: no cover
     """Execute the EAPG software on a single partition"""
@@ -58,25 +101,16 @@ def _run_eapg_grouper_on_partition(# pylint: disable=too-many-locals
     path_input_file = path_eapg_io / 'eapg_in.csv'
     path_output_file = path_workspace / 'eapgs_out_{}.csv'.format(id_partition)
 
-    options = {
-        'input': path_input_file.as_posix(),
-        'input_template': PATH_INPUT_TEMPLATE.as_posix(),
-        'upload': path_output_file.as_posix(),
-        'upload_template': PATH_OUTPUT_TEMPLATE.as_posix(),
-        'input_header': 'off',
-        'schedule': 'off',
-        'grouper': EAPG_VERSION,
-        'input_date_format': 'yyyy-MM-dd',
-        }
-
+    options = _compose_options(
+        id_partition,
+        path_input_file,
+        path_output_file,
+        path_logs_public,
+        **kwargs_eapg
+    )
     with path_input_file.open('w') as fh_input:
         for claim in iter_claims:
             fh_input.write(claim + "\n")
-
-    if path_logs_public:
-        options['error_log'] = path_logs_public / 'error_log_{}.txt'.format(id_partition)
-        options['edit_log'] = path_logs_public / 'edit_log_{}.txt'.format(id_partition)
-    options.update(**kwargs_eapg)
 
     args = [str(PATH_EAPG_GROUPER)]
     for key, val in options.items():
@@ -103,7 +137,7 @@ def run_eapg_grouper(
         *,
         path_network_io: typing.Optional[Path]=None,
         path_logs_public: typing.Optional[Path]=None,
-        cleanup_claim_copies: typing.Optional[bool]=True,
+        cleanup_claim_copies: bool=True,
         output_struct: typing.Optional[spark_types.StructType]=None,
         **kwargs_eapg
     ) -> "typing.Mapping[str, pyspark.sql.DataFrame]":

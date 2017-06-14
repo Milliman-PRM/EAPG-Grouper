@@ -15,10 +15,6 @@ import shutil
 from pathlib import Path
 from functools import partial
 
-import pyspark.sql
-import pyspark.sql.functions as spark_funcs
-import pyspark.sql.types as spark_types
-
 import eapg.shared
 from prm.spark.io_txt import encode_rows_to_strings, build_structtype_from_csv
 from prm.spark.app import SparkApp

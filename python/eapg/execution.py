@@ -49,18 +49,14 @@ def _run_eapg_grouper_on_partition(# pylint: disable=too-many-locals
         **kwargs_eapg
     ) -> None:  # pragma: no cover
     """Execute the EAPG software on a single partition"""
-
     path_eapg_io = Path.cwd() / "eapg_grouper_io" / "part_{}".format(id_partition)
     path_eapg_io.mkdir(
         parents=True,
         exist_ok=True,
         )
+
     path_input_file = path_eapg_io / 'eapg_in.csv'
     path_output_file = path_workspace / 'eapgs_out_{}.csv'.format(id_partition)
-
-    with path_input_file.open('w') as fh_input:
-        for claim in iter_claims:
-            fh_input.write(claim + "\n")
 
     options = {
         'input': path_input_file.as_posix(),
@@ -72,6 +68,11 @@ def _run_eapg_grouper_on_partition(# pylint: disable=too-many-locals
         'grouper': EAPG_VERSION,
         'input_date_format': 'yyyy-MM-dd',
         }
+
+    with path_input_file.open('w') as fh_input:
+        for claim in iter_claims:
+            fh_input.write(claim + "\n")
+
     if path_logs_public:
         options['error_log'] = path_logs_public / 'error_log_{}.txt'.format(id_partition)
         options['edit_log'] = path_logs_public / 'edit_log_{}.txt'.format(id_partition)

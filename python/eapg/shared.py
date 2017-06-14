@@ -1,5 +1,5 @@
 """
-### CODE OWNERS: Ben Copeland, Chas Busenburg
+### CODE OWNERS: Ben Copeland
 
 ### OBJECTIVE:
   House methods or constants that may apply to various parts of the EAPG process

@@ -1,5 +1,5 @@
 """
-### CODE OWNERS: Ben Copeland, Chas Busenburg
+### CODE OWNERS: Ben Copeland
 
 ### OBJECTIVE:
   Functions for executing the EAPG software

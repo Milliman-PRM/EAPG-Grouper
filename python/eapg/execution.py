@@ -75,6 +75,14 @@ def _compose_options(
 
     return pub_log_options
 
+def _subprocess_array_create(options:dict):
+    args = [str(PATH_EAPG_GROUPER)]
+    for key, val in options.items():
+        args.append('-' + key)
+        args.append(str(val))
+
+    return args
+
 
 
 
@@ -108,10 +116,8 @@ def _run_eapg_grouper_on_partition(# pylint: disable=too-many-locals
         for claim in iter_claims:
             fh_input.write(claim + "\n")
 
-    args = [str(PATH_EAPG_GROUPER)]
-    for key, val in options.items():
-        args.append('-' + key)
-        args.append(str(val))
+    args = _subprocess_array_create(options)
+    
 
     subprocess.run(
         args,

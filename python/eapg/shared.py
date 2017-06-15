@@ -212,7 +212,7 @@ def get_standard_inputs_from_prm(
         spark_funcs.lit(None).alias('itemndccode'),
         spark_funcs.lit(None).alias('userdefinednumberofvisits'), # Maryland only
         spark_funcs.col('operatingphysician'),
-        spark_funcs.col('member_id').alias('patientid'), # TODO: Ensure this is 40 chars in template
+        spark_funcs.col('member_id').alias('patientid'),
         spark_funcs.lit(None).alias('externalcauseofinjurydiagnosis'),
         spark_funcs.lit(None).alias('externalcauseofinjurydiagnosispoa'),
         spark_funcs.lit(None).alias('drugcharges'), # Maryland only

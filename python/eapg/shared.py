@@ -22,13 +22,13 @@ DAYS_PER_YEAR = 365.25
 N_DIAG_COLUMNS = 12
 
 try:
-    _PATH_THIS_FILE = Path(__file__).parent
+    _PATH_PARENT = Path(__file__).parent
 except NameError: # pragma: no cover
     # Likely running interactively for development
-    import eapg.shared # pylint: disable=wrong-import-position
-    _PATH_THIS_FILE = Path(eapg.shared.__file__).parent
+    import eapg # pylint: disable=wrong-import-position
+    _PATH_PARENT = Path(eapg.__file__).parent
 
-PATH_SCHEMAS = _PATH_THIS_FILE / 'schemas'
+PATH_SCHEMAS = _PATH_PARENT / 'schemas'
 
 # pylint: disable=no-member
 
@@ -70,23 +70,95 @@ def get_standard_inputs_from_prm(
         )
 
     LOGGER.info('Reformatting outclaims_prm into EAPG format')
-    df_decor = input_dataframes['outclaims_prm'].select(
+    df_claim_summaries = input_dataframes['outclaims_prm'].select(
+        '*',
+        spark_funcs.abs(
+            spark_funcs.col('paid')
+            ).alias('abs_paid'), # For some reason, paid can't be negative
+        spark_funcs.lit(0).alias('actionflag'),
+        spark_funcs.when(
+            spark_funcs.col('prm_line').startswith('P'),
+            1,
+            ).otherwise(0).alias('professionalserviceflag'),
+        (spark_funcs.col('allowed') - spark_funcs.col('billed')).alias('noncoveredcharges'),
+        spark_funcs.lit(None).alias('ndccode'),
+    ).groupBy(
+        'member_id',
+        'claimid',
+    ).agg(
+        *[
+            spark_funcs.concat_ws(
+                ';',
+                spark_funcs.collect_list(
+                    spark_funcs.coalesce(
+                        spark_funcs.col(col),
+                        spark_funcs.lit(''), # Empty string to force semi-colon delimiter
+                        )
+                    )
+                ).alias('{}_concat'.format(col))
+            for col in {
+                'sequencenumber',
+                'hcpcs',
+                'modifier',
+                'modifier2',
+                'revcode',
+                'units',
+                'abs_paid',
+                'fromdate',
+                'actionflag',
+                'professionalserviceflag',
+                'noncoveredcharges',
+                'ndccode',
+                'patientpay',
+                'pos',
+                }
+            ],
+        spark_funcs.first('providerid').alias('nationalprovideridentifier'),
+        spark_funcs.first('prm_fromdate_claim').alias('admitdate'),
+        spark_funcs.first('prm_todate_claim').alias('dischargedate'),
+        spark_funcs.first('billtype').alias('typeofbill'),
+        spark_funcs.first('dischargestatus').alias('dischargestatus'),
+        spark_funcs.sum('mr_paid').alias('totalcharges'),
+        *[
+            spark_funcs.first('icddiag{}'.format(i)).alias('icddiag{}'.format(i))
+            for i in range(1, N_DIAG_COLUMNS + 1)
+            ],
+        spark_funcs.substring(
+            spark_funcs.first('icdversion'),
+            2,
+            1,
+            ).alias('icdversionqualifier'),
+        *[
+            spark_funcs.when(
+                spark_funcs.first('poa{}'.format(i)).isin('Y', 'W'),
+                spark_funcs.lit('Y')
+                ).otherwise('N').alias('poa{}'.format(i))
+            for i in range(1, 16)
+            ],
+        spark_funcs.first('providerzip').alias('providerzipcode'),
+        spark_funcs.first('prm_prv_id_operating').alias('operatingphysician'),
+        spark_funcs.first('prm_line').alias('prm_line'),
+    )
+
+
+
+    df_decor = df_claim_summaries.select(
         spark_funcs.lit(None).alias('patientname'),
         spark_funcs.lit(None).alias('accountnumber'),
-        spark_funcs.lit(None).alias('medicalrecordnumber'),
-        spark_funcs.col('providerid').alias('nationalprovideridentifier'),
-        spark_funcs.col('prm_fromdate').alias('admitdate'),
-        spark_funcs.col('prm_todate').alias('dischargedate'),
+        spark_funcs.col('sequencenumber_concat').alias('medicalrecordnumber'),
+        spark_funcs.col('nationalprovideridentifier'),
+        spark_funcs.col('admitdate'),
+        spark_funcs.col('dischargedate'),
         # birthdate joined from member
         # ageinyears must be derived from dob/birthdate
         # sex joined from member
-        spark_funcs.col('billtype').alias('typeofbill'),
+        spark_funcs.col('typeofbill'),
         spark_funcs.lit(None).alias('conditioncode'),
         spark_funcs.col('dischargestatus'),
         spark_funcs.lit(1).alias('userkey1'),
         spark_funcs.lit(2).alias('userkey2'),
         spark_funcs.lit(3).alias('userkey3'),
-        spark_funcs.col('mr_paid').alias('totalcharges'),
+        spark_funcs.col('totalcharges'),
         spark_funcs.col('icddiag1').alias('principaldiagnosis'),
         spark_funcs.concat_ws(
             ';',
@@ -96,32 +168,28 @@ def get_standard_inputs_from_prm(
                 ],
             ).alias('secondarydiagnosis'),
         spark_funcs.lit(None).alias('reasonforvisitdiagnosis'),
-        spark_funcs.col('hcpcs').alias('procedurehcpcs'),
-        spark_funcs.col('modifier').alias('itemmodifier1'),
-        spark_funcs.col('modifier2').alias('itemmodifier2'),
+        spark_funcs.col('hcpcs_concat').alias('procedurehcpcs'),
+        spark_funcs.col('modifier_concat').alias('itemmodifier1'),
+        spark_funcs.col('modifier2_concat').alias('itemmodifier2'),
         spark_funcs.lit(None).alias('itemmodifier3'),
         spark_funcs.lit(None).alias('itemmodifier4'),
         spark_funcs.lit(None).alias('itemmodifier5'),
-        spark_funcs.col('revcode').alias('itemrevenuecode'),
-        spark_funcs.col('units').alias('itemunitsofservice'),
-        spark_funcs.abs(spark_funcs.col('paid')).alias('itemcharges'),
-        spark_funcs.col('fromdate').alias('itemservicedate'),
-        spark_funcs.lit(0).alias('itemactionflag'),
+        spark_funcs.col('revcode_concat').alias('itemrevenuecode'),
+        spark_funcs.col('units_concat').alias('itemunitsofservice'),
+        spark_funcs.col('abs_paid_concat').alias('itemcharges'),
+        spark_funcs.col('fromdate_concat').alias('itemservicedate'),
+        spark_funcs.col('actionflag_concat').alias('itemactionflag'),
         spark_funcs.lit(None).alias('occurrencecode'),
         spark_funcs.lit(None).alias('occurrencecodedate'),
+        spark_funcs.col('professionalserviceflag_concat').alias('itemprofessionalserviceflag'),
+        spark_funcs.col('icdversionqualifier'),
         spark_funcs.when(
-            spark_funcs.col('prm_line').startswith('P'),
-            1,
-            ).otherwise(0).alias('itemprofessionalserviceflag'),
-        spark_funcs.substring(
-            spark_funcs.col('icdversion'),
-            2,
-            1,
-            ).alias('icdversionqualifier'),
-        spark_funcs.when(
-            spark_funcs.col('poa1').isin('Y', 'W'),
-            spark_funcs.lit('Y')
-            ).otherwise('N').alias('principaldiagnosispoa'),
+            spark_funcs.col('poa1').isin('Y', 'N', 'U', 'W'),
+            spark_funcs.col('poa1')
+            ).when(
+                spark_funcs.col('poa1') == '1',
+                spark_funcs.lit('Y'),
+                ).otherwise('N').alias('principaldiagnosispoa'),
         spark_funcs.concat_ws(
             ';',
             *[
@@ -138,12 +206,12 @@ def get_standard_inputs_from_prm(
         spark_funcs.lit(None).alias('valuecode'),
         spark_funcs.lit(None).alias('valuecodeamount'),
         spark_funcs.lit(9).alias('admitpriority'),
-        (spark_funcs.col('allowed') - spark_funcs.col('billed')).alias('itemnoncoveredcharges'),
+        spark_funcs.col('noncoveredcharges_concat').alias('itemnoncoveredcharges'),
         spark_funcs.lit(None).alias('filler_formerlypointoforigin'),
-        spark_funcs.col('providerzip').alias('providerzipcode'),
+        spark_funcs.col('providerzipcode'),
         spark_funcs.lit(None).alias('itemndccode'),
         spark_funcs.lit(None).alias('userdefinednumberofvisits'), # Maryland only
-        spark_funcs.col('prm_prv_id_operating').alias('operatingphysician'),
+        spark_funcs.col('operatingphysician'),
         spark_funcs.col('member_id').alias('patientid'), # TODO: Ensure this is 40 chars in template
         spark_funcs.lit(None).alias('externalcauseofinjurydiagnosis'),
         spark_funcs.lit(None).alias('externalcauseofinjurydiagnosispoa'),
@@ -154,8 +222,8 @@ def get_standard_inputs_from_prm(
         spark_funcs.lit(None).alias('claimtype'), # Depends on state, MI or WI
         spark_funcs.lit(None).alias('financialpayer'), # Depends on state, NY or WI
         spark_funcs.lit(None).alias('memberbenefitplan'), # WI only
-        spark_funcs.col('patientpay').alias('itemcostshare'), # WI only
-        spark_funcs.col('pos').alias('itemplaceofservice'), # WI only
+        spark_funcs.col('patientpay_concat').alias('itemcostshare'), # WI only
+        spark_funcs.col('pos_concat').alias('itemplaceofservice'), # WI only
     )
 
     LOGGER.info('Joining member dimensions onto reformatted claims')

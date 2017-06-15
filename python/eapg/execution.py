@@ -41,7 +41,7 @@ def _public_log_check(
         options: typing.Dict
     ) -> dict:
     """ check if path_logs_public exists, """
-    LOGGER.debug("Checking Public_Log_Path_%d", id_partition)
+    print("Checking Public_Log_Path_{}".format(id_partition))
     if path_logs_public:
         options['error_log'] = path_logs_public / 'error_log_{}.txt'.format(id_partition)
         options['edit_log'] = path_logs_public / 'edit_log_{}.txt'.format(id_partition)
@@ -54,7 +54,7 @@ def _compose_options(
         path_logs_public: typing.Optional[Path],
         **kwargs_eapg
     ) -> dict:
-    LOGGER.debug("Composing options dictionary for partition_%d", id_partition)
+    print("Composing options dictionary for partition_{}".format(id_partition))
 
     initial_options = {
         'input': path_input_file.as_posix(),
@@ -76,7 +76,7 @@ def _compose_options(
     return pub_log_options
 
 def _subprocess_array_create(id_partition: int, options: dict) -> list:
-    LOGGER.debug("Creating subprocess array for partition %d", id_partition)
+    print("Creating subprocess array for partition {}".format(id_partition))
     args = [str(PATH_EAPG_GROUPER)]
     for key, val in options.items():
         args.append('-' + key)
@@ -87,7 +87,7 @@ def _subprocess_array_create(id_partition: int, options: dict) -> list:
 def _subprocess_partition(id_partition: int, options: dict) -> str:
     args = _subprocess_array_create(id_partition, options)
 
-    LOGGER.debug("Starting subprocess for partition %d", id_partition)
+    print("Starting subprocess for partition {}".format(id_partition))
 
     subprocess.run(
         args,
@@ -95,7 +95,7 @@ def _subprocess_partition(id_partition: int, options: dict) -> str:
         universal_newlines=True,
         check=True,
         )
-    LOGGER.debug("Finish subprocess for partition %d", id_partition)
+    print("Finish subprocess for partition {}".format(id_partition))
 
 
 
@@ -110,7 +110,7 @@ def _run_eapg_grouper_on_partition(# pylint: disable=too-many-locals
         **kwargs_eapg
     ) -> None:  # pragma: no cover
     """Execute the EAPG software on a single partition"""
-    LOGGER.info("Starting EAPG_Grouper on partition %d", id_partition)
+    print("Starting EAPG_Grouper on partition {}".format(id_partition))
 
     path_eapg_io = Path.cwd() / "eapg_grouper_io" / "part_{}".format(id_partition)
     path_eapg_io.mkdir(

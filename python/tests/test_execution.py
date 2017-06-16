@@ -110,10 +110,14 @@ def test__subprocess_array_create():
     assert all(item.startswith('-') for item in test_odd_index) #odd-index must start with '-'
 
 def test__subprocess_partition(tmpdir):
+    path_input = MOCK_DATA_PATH / 'test_eapg_in.csv'
+    path_upload = Path(str(tmpdir)) / 'test_eapg_out.csv'
+
+
     options = {
-        'input':  MOCK_DATA_PATH / 'test_eapg_in.csv'.as_posix(),
+        'input':  path_input.as_posix(),
         'input_template' : execution.PATH_INPUT_TEMPLATE.as_posix(),
-        'upload': Path(str(tmpdir)) / 'test_eapg_out.csv'.as_posix(),
+        'upload': path_upload.as_posix(),
         'upload_template': execution.PATH_OUTPUT_TEMPLATE.as_posix(),
         'input_header': 'off',
         'schedule': 'off',

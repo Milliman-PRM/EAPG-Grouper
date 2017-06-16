@@ -42,26 +42,14 @@ def _get_icd_columns(
         prefix: str,
         *,
         from_grouped_dataframe: bool=False
-    ) -> typing.Mapping:
+    ) -> typing.Iterable:
     """
         Grab ICD diag/proc/poa columns from a potentially dynamic number of columns
         with the ability to grab the first item from a grouped dataframe
     """
     LOGGER.debug('Finding %s columns from %s', prefix, dataframe)
-    col_map = dict()
-    col_map['secondary'] = list()
-    if from_grouped_dataframe:
-        _col_ref = spark_funcs.first(
-            spark_funcs.col('{}1'.format(prefix))
-            ).alias('{}1'.format(prefix))
-        col_map['primary'] = spark_funcs.first(
-            spark_funcs.col('{}1'.format(prefix))
-            ).alias('{}1'.format(prefix))
-    else:
-        _col_ref = spark_funcs.col('{}1'.format(prefix))
-    col_map['primary'] = _col_ref
-
-    for i in range(2, N_ICD_COLUMNS + 1):
+    col_list = list()
+    for i in range(1, N_ICD_COLUMNS + 1):
         potential_column = '{}{}'.format(prefix, i)
         if potential_column in dataframe.columns:
             if from_grouped_dataframe:
@@ -70,9 +58,9 @@ def _get_icd_columns(
                     ).alias(potential_column)
             else:
                 _col_ref = spark_funcs.col(potential_column)
-            col_map['secondary'].append(_col_ref)
+            col_list.append(_col_ref)
 
-    return col_map
+    return col_list
 
 def _convert_poa_to_character(
         column: pyspark.sql.Column
@@ -187,15 +175,13 @@ def get_standard_inputs_from_prm(
         spark_funcs.first('billtype').alias('typeofbill'),
         spark_funcs.first('dischargestatus').alias('dischargestatus'),
         spark_funcs.sum('mr_paid').alias('totalcharges'),
-        diag_cols['primary'],
-        *diag_cols['secondary'],
+        *diag_cols,
         spark_funcs.substring(
             spark_funcs.first('icdversion'),
             2,
             1,
             ).alias('icdversionqualifier'),
-        poa_cols['primary'],
-        *poa_cols['secondary'],
+        *poa_cols,
         spark_funcs.first('providerzip').alias('providerzipcode'),
         spark_funcs.first('prm_prv_id_operating').alias('operatingphysician'),
         spark_funcs.first('prm_line').alias('prm_line'),
@@ -228,10 +214,10 @@ def get_standard_inputs_from_prm(
         spark_funcs.lit(2).alias('userkey2'),
         spark_funcs.lit(3).alias('userkey3'),
         spark_funcs.col('totalcharges'),
-        grouped_diag_cols['primary'].alias('principaldiagnosis'),
+        grouped_diag_cols[0].alias('principaldiagnosis'),
         spark_funcs.concat_ws(
             ';',
-            *grouped_diag_cols['secondary'],
+            *grouped_diag_cols[1:],
             ).alias('secondarydiagnosis'),
         spark_funcs.lit(None).alias('reasonforvisitdiagnosis'),
         spark_funcs.col('hcpcs_concat').alias('procedurehcpcs'),
@@ -250,7 +236,7 @@ def get_standard_inputs_from_prm(
         spark_funcs.col('professionalserviceflag_concat').alias('itemprofessionalserviceflag'),
         spark_funcs.col('icdversionqualifier'),
         _convert_poa_to_character(
-            grouped_poa_cols['primary']
+            grouped_poa_cols[0]
             ).alias('principaldiagnosispoa'),
         spark_funcs.concat_ws(
             ';',
@@ -258,7 +244,7 @@ def get_standard_inputs_from_prm(
                 _convert_poa_to_character(
                     poa_col
                     )
-                for poa_col in grouped_poa_cols['secondary']
+                for poa_col in grouped_poa_cols[1:]
                 ],
             ).alias('secondarydiagnosispoa'),
         spark_funcs.lit(None).alias('valuecode'),

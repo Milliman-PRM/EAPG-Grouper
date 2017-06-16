@@ -8,12 +8,18 @@
 # Expecting to test private pieces of module.
 # pylint: disable=protected-access
 from pathlib import Path
+import filecmp
 
 import eapg.execution as execution
 
 # =============================================================================
 # LIBRARIES, LOCATIONS, LITERALS, ETC. GO ABOVE HERE
 # =============================================================================
+try:
+    MOCK_DATA_PATH = Path(__file__).parent / 'mock_data'
+    MOCK_SCHEMAS_PATH = Path(__file__).parent / 'mock_schemas'
+except NameError:
+     
 
 
 
@@ -102,5 +108,25 @@ def test__subprocess_array_create():
     assert len(set(test_out) - set(args)) == 0 #must contain all elements
     assert args[0] == test_out[0] #first argument must be the EAPG_GROUPER path
     assert all(item.startswith('-') for item in test_odd_index) #odd-index must start with '-'
+
+def test__subprocess_partition(tmpdir):
+    options = {
+        'input':  MOCK_DATA_PATH / 'test_eapg_in.csv'.as_posix(), 
+        'input_template' : execution.PATH_INPUT_TEMPLATE.as_posix(),
+        'upload': Path(str(tmpdir)) / 'test_eapg_out.csv'.as_posix(),
+        'upload_template': execution.PATH_OUTPUT_TEMPLATE.as_posix(),
+        'input_header': 'off',
+        'schedule': 'off',
+        'grouper': execution.EAPG_VERSION,
+        'input_date_format': 'yyyy-MM-dd',
+    }
+    id_partition = 42
+    output_expected_path = MOCK_DATA_PATH / 'test_execution_expected.csv'
+    output_test_path = Path(str(tmpdir)) /'test_eapg_out.csv'
+    execution._subprocess_partition(id_partition, options)
+    assert filecmp.cmp(str(output_test_path),
+                       str(output_expected_path)) # compare basic stats for the two files.
+
+
 
 

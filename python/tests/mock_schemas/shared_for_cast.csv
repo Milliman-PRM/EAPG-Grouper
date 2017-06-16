@@ -1,0 +1,5 @@
+name,datatype,nullable,label
+sequencenumber,integer,False,Claim Record
+int_field,integer,True,Line Number
+str_field,string,True,Description
+float_field,float,True,Costs

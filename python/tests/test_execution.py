@@ -19,7 +19,7 @@ try:
     MOCK_DATA_PATH = Path(__file__).parent / 'mock_data'
     MOCK_SCHEMAS_PATH = Path(__file__).parent / 'mock_schemas'
 except NameError:
-     
+    pass
 
 
 
@@ -111,7 +111,7 @@ def test__subprocess_array_create():
 
 def test__subprocess_partition(tmpdir):
     options = {
-        'input':  MOCK_DATA_PATH / 'test_eapg_in.csv'.as_posix(), 
+        'input':  MOCK_DATA_PATH / 'test_eapg_in.csv'.as_posix(),
         'input_template' : execution.PATH_INPUT_TEMPLATE.as_posix(),
         'upload': Path(str(tmpdir)) / 'test_eapg_out.csv'.as_posix(),
         'upload_template': execution.PATH_OUTPUT_TEMPLATE.as_posix(),

@@ -19,7 +19,7 @@ from prm.spark.io_txt import build_structtype_from_csv
 LOGGER = logging.getLogger(__name__)
 
 DAYS_PER_YEAR = 365.25
-N_DIAG_COLUMNS = 12
+N_ICD_COLUMNS = 24
 
 try:
     _PATH_PARENT = Path(__file__).parent
@@ -37,6 +37,57 @@ PATH_SCHEMAS = _PATH_PARENT / 'schemas'
 # =============================================================================
 
 
+def _get_icd_columns(
+        dataframe: pyspark.sql.DataFrame,
+        prefix: str,
+        *,
+        from_grouped_dataframe: bool=False
+    ) -> typing.Mapping:
+    """
+        Grab ICD diag/proc/poa columns from a potentially dynamic number of columns
+        with the ability to grab the first item from a grouped dataframe
+    """
+    LOGGER.debug('Finding %s columns from %s', prefix, dataframe)
+    col_map = dict()
+    col_map['secondary'] = list()
+    if from_grouped_dataframe:
+        _col_ref = spark_funcs.first(
+            spark_funcs.col('{}1'.format(prefix))
+            ).alias('{}1'.format(prefix))
+        col_map['primary'] = spark_funcs.first(
+            spark_funcs.col('{}1'.format(prefix))
+            ).alias('{}1'.format(prefix))
+    else:
+        _col_ref = spark_funcs.col('{}1'.format(prefix))
+    col_map['primary'] = _col_ref
+
+    for i in range(2, N_ICD_COLUMNS + 1):
+        potential_column = '{}{}'.format(prefix, i)
+        if potential_column in dataframe.columns:
+            if from_grouped_dataframe:
+                _col_ref = spark_funcs.first(
+                    spark_funcs.col(potential_column)
+                    ).alias(potential_column)
+            else:
+                _col_ref = spark_funcs.col(potential_column)
+            col_map['secondary'].append(_col_ref)
+
+    return col_map
+
+def _convert_poa_to_character(
+        column: pyspark.sql.Column
+    ) -> pyspark.sql.Column:
+    """Convert any numeric POA representations to Y/N"""
+    LOGGER.debug('Converting %s to character-only POA', column)
+    return spark_funcs.when(
+        column.isin('Y', 'N', 'U', 'W'),
+        column
+        ).when(
+            column == '1',
+            spark_funcs.lit('Y'),
+            ).otherwise('N')
+
+
 def _coalesce_metadata_and_cast(
         struct: spark_types.StructType,
         dataframe: pyspark.sql.DataFrame,
@@ -45,6 +96,11 @@ def _coalesce_metadata_and_cast(
         Update the datamart schema from a dataframe schema for pass down to
         aliasWithMetadata
     """
+    LOGGER.info(
+        'Adding %s metadata to %s and casting to desired dataTypes',
+        struct,
+        dataframe,
+        )
     meta_select = list()
     for field in struct:
         meta = field.metadata.copy()
@@ -67,6 +123,18 @@ def get_standard_inputs_from_prm(
     LOGGER.info("Creating standard EAPG software inputs from ~public PRM data")
     struct = build_structtype_from_csv(
         path_schema_input
+        )
+
+    diag_cols = _get_icd_columns(
+        input_dataframes['outclaims_prm'],
+        'icddiag',
+        from_grouped_dataframe=True,
+        )
+
+    poa_cols = _get_icd_columns(
+        input_dataframes['outclaims_prm'],
+        'poa',
+        from_grouped_dataframe=True,
         )
 
     LOGGER.info('Reformatting outclaims_prm into EAPG format')
@@ -119,28 +187,29 @@ def get_standard_inputs_from_prm(
         spark_funcs.first('billtype').alias('typeofbill'),
         spark_funcs.first('dischargestatus').alias('dischargestatus'),
         spark_funcs.sum('mr_paid').alias('totalcharges'),
-        *[
-            spark_funcs.first('icddiag{}'.format(i)).alias('icddiag{}'.format(i))
-            for i in range(1, N_DIAG_COLUMNS + 1)
-            ],
+        diag_cols['primary'],
+        *diag_cols['secondary'],
         spark_funcs.substring(
             spark_funcs.first('icdversion'),
             2,
             1,
             ).alias('icdversionqualifier'),
-        *[
-            spark_funcs.when(
-                spark_funcs.first('poa{}'.format(i)).isin('Y', 'W'),
-                spark_funcs.lit('Y')
-                ).otherwise('N').alias('poa{}'.format(i))
-            for i in range(1, 16)
-            ],
+        poa_cols['primary'],
+        *poa_cols['secondary'],
         spark_funcs.first('providerzip').alias('providerzipcode'),
         spark_funcs.first('prm_prv_id_operating').alias('operatingphysician'),
         spark_funcs.first('prm_line').alias('prm_line'),
     )
 
+    grouped_diag_cols = _get_icd_columns(
+        df_claim_summaries,
+        'icddiag',
+        )
 
+    grouped_poa_cols = _get_icd_columns(
+        df_claim_summaries,
+        'poa',
+        )
 
     df_decor = df_claim_summaries.select(
         spark_funcs.lit(None).alias('patientname'),
@@ -155,17 +224,14 @@ def get_standard_inputs_from_prm(
         spark_funcs.col('typeofbill'),
         spark_funcs.lit(None).alias('conditioncode'),
         spark_funcs.col('dischargestatus'),
-        spark_funcs.lit(1).alias('userkey1'),
+        spark_funcs.lit(1).alias('userkey1'), # Just placeholders
         spark_funcs.lit(2).alias('userkey2'),
         spark_funcs.lit(3).alias('userkey3'),
         spark_funcs.col('totalcharges'),
-        spark_funcs.col('icddiag1').alias('principaldiagnosis'),
+        grouped_diag_cols['primary'].alias('principaldiagnosis'),
         spark_funcs.concat_ws(
             ';',
-            *[
-                spark_funcs.col('icddiag{}'.format(i))
-                for i in range(2, N_DIAG_COLUMNS + 1)
-                ],
+            *grouped_diag_cols['secondary'],
             ).alias('secondarydiagnosis'),
         spark_funcs.lit(None).alias('reasonforvisitdiagnosis'),
         spark_funcs.col('hcpcs_concat').alias('procedurehcpcs'),
@@ -183,24 +249,16 @@ def get_standard_inputs_from_prm(
         spark_funcs.lit(None).alias('occurrencecodedate'),
         spark_funcs.col('professionalserviceflag_concat').alias('itemprofessionalserviceflag'),
         spark_funcs.col('icdversionqualifier'),
-        spark_funcs.when(
-            spark_funcs.col('poa1').isin('Y', 'N', 'U', 'W'),
-            spark_funcs.col('poa1')
-            ).when(
-                spark_funcs.col('poa1') == '1',
-                spark_funcs.lit('Y'),
-                ).otherwise('N').alias('principaldiagnosispoa'),
+        _convert_poa_to_character(
+            grouped_poa_cols['primary']
+            ).alias('principaldiagnosispoa'),
         spark_funcs.concat_ws(
             ';',
             *[
-                spark_funcs.when(
-                    spark_funcs.col('poa{}'.format(i)).isin('Y', 'N', 'U', 'W'),
-                    spark_funcs.col('poa{}'.format(i))
-                    ).when(
-                        spark_funcs.col('poa{}'.format(i)) == '1',
-                        spark_funcs.lit('Y'),
-                        ).otherwise('N')
-                for i in range(2, N_DIAG_COLUMNS + 1)
+                _convert_poa_to_character(
+                    poa_col
+                    )
+                for poa_col in grouped_poa_cols['secondary']
                 ],
             ).alias('secondarydiagnosispoa'),
         spark_funcs.lit(None).alias('valuecode'),

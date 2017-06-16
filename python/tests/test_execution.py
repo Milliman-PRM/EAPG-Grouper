@@ -128,9 +128,5 @@ def test__subprocess_partition(tmpdir):
     output_expected_path = MOCK_DATA_PATH / 'test_execution_expected.csv'
     output_test_path = Path(str(tmpdir)) /'test_eapg_out.csv'
     execution._subprocess_partition(id_partition, options)
-    assert filecmp.cmp(str(output_test_path),
-                       str(output_expected_path)) # compare basic stats for the two files.
-
-
-
-
+    assert filecmp.cmp(output_expected_path,
+                       output_test_path)  # compare basic stats for the two files.

@@ -84,7 +84,7 @@ def test__compose_options(tmpdir):
                                                        path_output_file,
                                                        path_logs_public,
                                                        test=True)
-def test__subprocess_array_create(tmpdir):
+def test__subprocess_array_create():
     """test subprocess correctly creates array"""
     id_partition = 42
     options = {
@@ -102,3 +102,5 @@ def test__subprocess_array_create(tmpdir):
     assert len(set(test_out) - set(args)) == 0 #must contain all elements
     assert args[0] == test_out[0] #first argument must be the EAPG_GROUPER path
     assert all(item.startswith('-') for item in test_odd_index) #odd-index must start with '-'
+
+

@@ -1,0 +1,6 @@
+sequencenumber,int_field,str_field,float_field
+1,5,once,21.42
+2,4,upon,
+3,,an,42.21
+4,3,eapg,84.42
+5,2,,42.84

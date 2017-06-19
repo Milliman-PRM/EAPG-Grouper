@@ -1,0 +1,4 @@
+name,datatype,nullable
+member_id,string,False
+gender,string,False
+dob,date,True

@@ -119,7 +119,7 @@ def test__subprocess_partition(tmpdir):
         'input_template' : execution.PATH_INPUT_TEMPLATE.as_posix(),
         'upload': path_upload.as_posix(),
         'upload_template': execution.PATH_OUTPUT_TEMPLATE.as_posix(),
-        'input_header': 'off',
+        'input_header': 'on',
         'schedule': 'off',
         'grouper': execution.EAPG_VERSION,
         'input_date_format': 'yyyy-MM-dd',

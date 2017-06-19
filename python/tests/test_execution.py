@@ -129,5 +129,6 @@ def test__subprocess_partition(tmpdir):
     output_test_path = path_upload
     execution._subprocess_partition(id_partition, options)
     assert filecmp.cmp(str(output_expected_path),
-                       str(output_test_path))  # compare basic stats for the two files.
+                       str(output_test_path),
+                       shallow=False)  # compare basic stats for the two files.
  

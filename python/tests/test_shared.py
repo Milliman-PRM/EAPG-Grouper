@@ -170,3 +170,42 @@ def test__coalesce_metadata_and_cast(
         )
     assert dataframe_modified_metadata.schema['sequencenumber'].metadata['subdelimited'] != \
         target_schema['sequencenumber'].metadata['subdelimited']
+
+
+def test_get_standard_inputs_from_prm(
+        mock_dataframes,
+    ):  # pylint: disable=invalid-name
+    """Test the coalescing of metadata and casting"""
+    input_dataframes = {
+        'outclaims_prm': mock_dataframes['raw_input'],
+        'member': mock_dataframes['member'],
+        }
+    df_results = eapg.shared.get_standard_inputs_from_prm(
+        input_dataframes,
+        )
+
+    def _round_float_cols(
+            dataframe
+        ):
+        """Remove all float columns from a dataframe because comparing floats goes poorly"""
+        col_types = {col.name: col.dataType.simpleString() for col in dataframe.schema.fields}
+
+        col_select = list()
+        for name in dataframe.columns:
+            if col_types[name] in {"float", "double"}:
+                col_select.append(
+                    spark_funcs.format_number(
+                        spark_funcs.col(name),
+                        2,
+                        ).alias(name)
+                    )
+            else:
+                col_select.append(name)
+
+        return dataframe.select(col_select)
+
+    # Test after rounding floats and forcing string columns to empty strings
+    assert _round_float_cols(df_results.fillna('')).subtract(
+        _round_float_cols(mock_dataframes['expected_input'].fillna(''))
+        ).count() == 0
+

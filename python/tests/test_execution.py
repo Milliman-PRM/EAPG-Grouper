@@ -110,8 +110,8 @@ def test__subprocess_array_create():
     assert all(item.startswith('-') for item in test_odd_index) #odd-index must start with '-'
 
 def test__subprocess_partition(tmpdir):
-    path_input = MOCK_DATA_PATH / 'test_eapg_in.csv'
-    path_upload = Path(str(tmpdir)) / 'test_eapg_out.csv'
+    path_input = MOCK_DATA_PATH / 'execution_eapg_in.csv'
+    path_upload = Path(str(tmpdir)) / 'execution_eapg_out.csv'
 
 
     options = {
@@ -126,7 +126,7 @@ def test__subprocess_partition(tmpdir):
     }
     id_partition = 42
     output_expected_path = MOCK_DATA_PATH / 'test_execution_expected.csv'
-    output_test_path = Path(str(tmpdir)) /'test_eapg_out.csv'
+    output_test_path = path_upload
     execution._subprocess_partition(id_partition, options)
     assert filecmp.cmp(output_expected_path,
                        output_test_path)  # compare basic stats for the two files.

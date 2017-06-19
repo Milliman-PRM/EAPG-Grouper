@@ -136,7 +136,7 @@ def get_standard_inputs_from_prm(
             spark_funcs.col('prm_line').startswith('P'),
             1,
             ).otherwise(0).alias('professionalserviceflag'),
-        (spark_funcs.col('allowed') - spark_funcs.col('billed')).alias('noncoveredcharges'),
+        (spark_funcs.col('allowed') - spark_funcs.col('paid')).alias('noncoveredcharges'),
         spark_funcs.lit(None).alias('ndccode'),
     ).groupBy(
         'member_id',
@@ -183,7 +183,7 @@ def get_standard_inputs_from_prm(
             ).alias('icdversionqualifier'),
         *poa_cols,
         spark_funcs.first('providerzip').alias('providerzipcode'),
-        spark_funcs.first('prm_prv_id_operating').alias('operatingphysician'),
+        spark_funcs.max('prm_prv_id_operating').alias('operatingphysician'),
         spark_funcs.first('prm_line').alias('prm_line'),
     )
 

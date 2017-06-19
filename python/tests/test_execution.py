@@ -125,7 +125,7 @@ def test__subprocess_partition(tmpdir):
         'input_date_format': 'yyyy-MM-dd',
     }
     id_partition = 42
-    output_expected_path = MOCK_DATA_PATH / 'test_execution_expected.csv'
+    output_expected_path =  MOCK_DATA_PATH/ 'execution_eapg_out.csv'
     output_test_path = path_upload
     execution._subprocess_partition(id_partition, options)
     assert filecmp.cmp(str(output_expected_path),

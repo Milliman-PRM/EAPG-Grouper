@@ -289,12 +289,12 @@ def get_standard_inputs_from_prm(
             ).alias('ageinyears'),
     )
 
-    df_struct = _coalesce_metadata_and_cast(
+    df_eapg_input = _coalesce_metadata_and_cast(
         struct,
         df_merge
         )
 
-    return df_struct
+    return df_eapg_input
 
 if __name__ == 'main':
     pass

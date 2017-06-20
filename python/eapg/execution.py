@@ -80,7 +80,7 @@ def _compose_cli_parameters(
 
     return cli_parameters
 
-def _compose_eapg_subprocess_arguments(
+def _compose_eapg_subprocess_args(
         id_partition: int,
         options: dict,
     )-> list:
@@ -96,7 +96,8 @@ def _run_eapg_subprocess(
         id_partition: int,
         options: dict
     ) -> str:
-    args = _compose_eapg_subprocess_arguments(id_partition, options)
+    """Execute EAPG Grouper Command Line Subprocess"""
+    args = _compose_eapg_subprocess_args(id_partition, options)
 
     print("Starting subprocess for partition {}".format(id_partition))
 

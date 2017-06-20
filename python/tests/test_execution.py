@@ -91,7 +91,7 @@ def test__compose_cli_parameters(tmpdir):
         path_logs_public,
         test=True,
     )
-def test__compose_eapg_subprocess_arguments():
+def test__compose_eapg_subprocess_args(): # pylint: disable=invalid-name
     """test subprocess correctly creates array"""
     id_partition = 42
     options = {
@@ -104,7 +104,7 @@ def test__compose_eapg_subprocess_arguments():
         'test_string_input',
         '-input_template',
         'test_string_input_template']
-    test_out = execution._compose_eapg_subprocess_arguments(
+    test_out = execution._compose_eapg_subprocess_args(
         id_partition,
         options,
     )
@@ -114,6 +114,7 @@ def test__compose_eapg_subprocess_arguments():
     assert all(item.startswith('-') for item in test_odd_index) #odd-index must start with '-'
 
 def test__run_eapg_subprocess(tmpdir):
+    """test the eapg_subprocess on a single .csv file"""
     path_input = MOCK_DATA_PATH / 'execution_eapg_in.csv'
     path_upload = Path(str(tmpdir)) / 'execution_eapg_out.csv'
 
@@ -129,7 +130,7 @@ def test__run_eapg_subprocess(tmpdir):
         'input_date_format': 'yyyy-MM-dd',
     }
     id_partition = 42
-    output_expected_path =  MOCK_DATA_PATH/ 'execution_eapg_out.csv'
+    output_expected_path = MOCK_DATA_PATH/ 'execution_eapg_out.csv'
     output_test_path = path_upload
     execution._run_eapg_subprocess(
         id_partition,
@@ -140,4 +141,3 @@ def test__run_eapg_subprocess(tmpdir):
         str(output_test_path),
         shallow=False,
     )  # The two files must be exactly the same.
- 

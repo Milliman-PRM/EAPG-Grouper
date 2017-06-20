@@ -10,8 +10,11 @@
 from pathlib import Path
 import filecmp
 
-import eapg.execution as execution
+import pytest
 
+import eapg.execution as execution
+import eapg
+from prm.spark.io_txt import build_structtype_from_csv
 # =============================================================================
 # LIBRARIES, LOCATIONS, LITERALS, ETC. GO ABOVE HERE
 # =============================================================================
@@ -20,6 +23,18 @@ try:
     MOCK_SCHEMAS_PATH = Path(__file__).parent / 'mock_schemas'
 except NameError:
     pass
+
+def _get_name_from_path(path):
+    """Derive data set name from testing file path"""
+    return path.stem[path.stem.find("_") + 1:]
+
+@pytest.fixture
+def mock_schemas():
+    """Schemas for testing data"""
+    return {
+        _get_name_from_path(path): build_structtype_from_csv(path)
+        for path in MOCK_SCHEMAS_PATH.glob("shared_*.csv")
+        }
 
 
 
@@ -31,7 +46,7 @@ def test__public_log_parameters(tmpdir):
 
     expected_true_dict = {
         'error_log': true_test_path / 'error_log_{}.txt'.format(id_partition),
-        'edit_log': true_test_path / 'edit_log_{}.txt'.format(id_partition)
+        'edit_log': true_test_path / 'edit_log_{}.txt'.format(id_partition) 
     }
 
     expected_false_dict = dict()
@@ -156,3 +171,13 @@ def test__assign_path_workspace(tmpdir):
         path_network_io,
         path_output,
     ) == path_network_io
+
+def test__generate_final_struct(mock_schemas):
+    none_final_struct = build_structtype_from_csv(
+        eapg.shared.PATH_SCHEMAS / 'eapgs_out.csv'
+
+    )
+    output_final_struct = mock_schemas['member']
+
+    assert execution._generate_final_struct(None) == none_final_struct
+    assert execution._generate_final_struct(output_final_struct) == output_final_struct

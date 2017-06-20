@@ -142,10 +142,10 @@ def test__run_eapg_subprocess(tmpdir):
         shallow=False,
     )  # The two files must be exactly the same.
 
-def test__assign_path_network_io(tmpdir):
+def test__assign_path_workspace(tmpdir):
     path_output = Path(str(tmpdir))
-    none_workspace = path_output / 'temp_eapg_grouper'
-    path_network_io = Path('/test')
+    none_workspace = path_output / '_temp_eapg_grouper'
+    path_network_io = Path('C:/test')
 
     assert execution._assign_path_workspace(
         None,

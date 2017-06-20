@@ -23,33 +23,30 @@ except NameError:
 
 
 
-def test__public_log_check(tmpdir):
+def test__public_log_parameters(tmpdir):
     """test that public_log_check tests correctly"""
     id_partition = 3
     true_test_path = Path(str(tmpdir))
     false_test_path = None
 
-    true_dict = {
-        'test' : True
-    }
-    true_after_dict = {
-        'test' : True,
+    expected_true_dict = {
         'error_log': true_test_path / 'error_log_{}.txt'.format(id_partition),
         'edit_log': true_test_path / 'edit_log_{}.txt'.format(id_partition)
     }
 
-    false_dict = {
-        'test' : False
-    }
-    assert false_dict == execution._public_log_check(id_partition,
-                                                     false_test_path,
-                                                     false_dict)
+    expected_false_dict = dict()
+    result_true_dict = execution._get_public_log_parameters(
+        id_partition,
+        true_test_path,
+    )
+    result_false_dict = execution._get_public_log_parameters(
+        id_partition,
+        false_test_path,
+    )
+    assert expected_false_dict == result_false_dict
+    assert expected_true_dict == result_true_dict
 
-    assert true_after_dict == execution._public_log_check(id_partition,
-                                                          true_test_path,
-                                                          true_dict)
-
-def test__compose_options(tmpdir):
+def test__compose_cli_parameters(tmpdir):
     """test _compose_options, specifically that **kwargs outputs as expected"""
     id_partition = 3
     path_input_file = Path(str(tmpdir)) / 'temp_in.txt'
@@ -67,7 +64,7 @@ def test__compose_options(tmpdir):
         'schedule': 'off',
         'grouper': eapg_version,
         'input_date_format': 'yyyy-MM-dd',
-        'test':True
+        'test':True,
     }
 
     output_sans_kwargs = {
@@ -81,16 +78,20 @@ def test__compose_options(tmpdir):
         'input_date_format': 'yyyy-MM-dd',
     }
 
-    assert output_sans_kwargs == execution._compose_options(id_partition,
-                                                            path_input_file,
-                                                            path_output_file,
-                                                            path_logs_public)
-    assert output_kwargs == execution._compose_options(id_partition,
-                                                       path_input_file,
-                                                       path_output_file,
-                                                       path_logs_public,
-                                                       test=True)
-def test__subprocess_array_create():
+    assert output_sans_kwargs == execution._compose_cli_parameters(
+        id_partition,
+        path_input_file,
+        path_output_file,
+        path_logs_public,
+    )
+    assert output_kwargs == execution._compose_cli_parameters(
+        id_partition,
+        path_input_file,
+        path_output_file,
+        path_logs_public,
+        test=True,
+    )
+def test__compose_eapg_subprocess_arguments():
     """test subprocess correctly creates array"""
     id_partition = 42
     options = {
@@ -103,13 +104,16 @@ def test__subprocess_array_create():
         'test_string_input',
         '-input_template',
         'test_string_input_template']
-    test_out = execution._subprocess_array_create(id_partition, options)
+    test_out = execution._compose_eapg_subprocess_arguments(
+        id_partition,
+        options,
+    )
     test_odd_index = test_out[1::2]
     assert len(set(test_out) - set(args)) == 0 #must contain all elements
     assert args[0] == test_out[0] #first argument must be the EAPG_GROUPER path
     assert all(item.startswith('-') for item in test_odd_index) #odd-index must start with '-'
 
-def test__subprocess_partition(tmpdir):
+def test__run_eapg_subprocess(tmpdir):
     path_input = MOCK_DATA_PATH / 'execution_eapg_in.csv'
     path_upload = Path(str(tmpdir)) / 'execution_eapg_out.csv'
 
@@ -127,8 +131,13 @@ def test__subprocess_partition(tmpdir):
     id_partition = 42
     output_expected_path =  MOCK_DATA_PATH/ 'execution_eapg_out.csv'
     output_test_path = path_upload
-    execution._subprocess_partition(id_partition, options)
-    assert filecmp.cmp(str(output_expected_path),
-                       str(output_test_path),
-                       shallow=False)  # compare basic stats for the two files.
+    execution._run_eapg_subprocess(
+        id_partition,
+        options
+    )
+    assert filecmp.cmp(
+        str(output_expected_path),
+        str(output_test_path),
+        shallow=False,
+    )  # The two files must be exactly the same.
  

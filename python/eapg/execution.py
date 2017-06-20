@@ -37,19 +37,22 @@ PATH_OUTPUT_TEMPLATE = PATH_TEMPLATES / 'prm_eapgs_out.2017.1.2.dic'
 # =============================================================================
 
 
-def _public_log_check(
+def _get_public_log_parameters(
         id_partition: int,
-        path_logs_public: typing.Optional[Path],
-        options: typing.Dict
+        path_logs_public: typing.Optional[Path]
     ) -> dict:
     """ check if path_logs_public exists, """
     print("Checking Public_Log_Path_{}".format(id_partition))
     if path_logs_public:
-        options['error_log'] = path_logs_public / 'error_log_{}.txt'.format(id_partition)
-        options['edit_log'] = path_logs_public / 'edit_log_{}.txt'.format(id_partition)
-    return options
+        public_options = {
+            'error_log': path_logs_public / 'error_log_{}.txt'.format(id_partition),
+            'edit_log': path_logs_public / 'edit_log_{}.txt'.format(id_partition),
+        }
+    else:
+        public_options = dict()
+    return public_options
 
-def _compose_options(
+def _compose_cli_parameters(
         id_partition: int,
         path_input_file: Path,
         path_output_file: Path,
@@ -58,7 +61,7 @@ def _compose_options(
     ) -> dict:
     print("Composing options dictionary for partition_{}".format(id_partition))
 
-    initial_options = {
+    initial_parameters = {
         'input': path_input_file.as_posix(),
         'input_template': PATH_INPUT_TEMPLATE.as_posix(),
         'upload': path_output_file.as_posix(),
@@ -68,16 +71,19 @@ def _compose_options(
         'grouper': EAPG_VERSION,
         'input_date_format': 'yyyy-MM-dd',
         }
-    pub_log_options = _public_log_check(
+    pub_log_parameters = _get_public_log_parameters(
         id_partition,
-        path_logs_public,
-        initial_options
+        path_logs_public
     )
-    pub_log_options.update(**kwargs_eapg)
+    cli_parameters = {**pub_log_parameters, **initial_parameters}
+    cli_parameters.update(**kwargs_eapg)
 
-    return pub_log_options
+    return cli_parameters
 
-def _subprocess_array_create(id_partition: int, options: dict) -> list:
+def _compose_eapg_subprocess_arguments(
+        id_partition: int,
+        options: dict,
+    )-> list:
     print("Creating subprocess array for partition {}".format(id_partition))
     args = [str(PATH_EAPG_GROUPER)]
     for key, val in options.items():
@@ -86,8 +92,11 @@ def _subprocess_array_create(id_partition: int, options: dict) -> list:
 
     return args
 
-def _subprocess_partition(id_partition: int, options: dict) -> str:
-    args = _subprocess_array_create(id_partition, options)
+def _run_eapg_subprocess(
+        id_partition: int,
+        options: dict
+    ) -> str:
+    args = _compose_eapg_subprocess_arguments(id_partition, options)
 
     print("Starting subprocess for partition {}".format(id_partition))
 
@@ -123,7 +132,7 @@ def _run_eapg_grouper_on_partition(# pylint: disable=too-many-locals
     path_input_file = path_eapg_io / 'eapg_in.csv'
     path_output_file = path_workspace / 'eapgs_out_{}.csv'.format(id_partition)
 
-    options = _compose_options(
+    options = _compose_cli_parameters(
         id_partition,
         path_input_file,
         path_output_file,
@@ -134,7 +143,7 @@ def _run_eapg_grouper_on_partition(# pylint: disable=too-many-locals
         for claim in iter_claims:
             fh_input.write(claim + "\n")
 
-    _subprocess_partition(id_partition, options)
+    _run_eapg_subprocess(id_partition, options)
 
     yield path_output_file.name
 

@@ -134,10 +134,25 @@ def test__run_eapg_subprocess(tmpdir):
     output_test_path = path_upload
     execution._run_eapg_subprocess(
         id_partition,
-        options
+        options,
     )
     assert filecmp.cmp(
         str(output_expected_path),
         str(output_test_path),
         shallow=False,
     )  # The two files must be exactly the same.
+
+def test__assign_path_network_io(tmpdir):
+    path_output = Path(str(tmpdir))
+    none_workspace = path_output / 'temp_eapg_grouper'
+    path_network_io = Path('/test')
+
+    assert execution._assign_path_workspace(
+        None,
+        path_output,
+    ) == none_workspace
+
+    assert execution._assign_path_workspace(
+        path_network_io,
+        path_output,
+    ) == path_network_io

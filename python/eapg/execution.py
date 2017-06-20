@@ -151,6 +151,25 @@ def _run_eapg_grouper_on_partition(# pylint: disable=too-many-locals
     if cleanup_claim_copies:
         shutil.rmtree(str(path_eapg_io)) # Cleanup extra claim copies lying around
 
+def _assign_path_workspace(
+        path_network_io: typing.Optional[Path],
+        path_output: typing.Optional[Path],
+    ) -> Path:
+    if path_network_io:
+        path_workspace = path_network_io
+    else:
+        path_workspace = path_output / '_temp_eapg_grouper'
+    return path_workspace
+
+def _generate_final_struct(
+        output_struct: typing.Optional[spark_types.StructType],
+    )-> spark_types.StructType:
+    if not output_struct:
+        return build_structtype_from_csv(
+            eapg.shared.PATH_SCHEMAS / 'eapgs_out.csv'
+        )
+    return output_struct
+
 
 def run_eapg_grouper(
         sparkapp: SparkApp,
@@ -164,12 +183,10 @@ def run_eapg_grouper(
         **kwargs_eapg
     ) -> "typing.Mapping[str, pyspark.sql.DataFrame]":
     """Execute the EAPG software"""
-
-    if path_network_io:
-        path_workspace = path_network_io
-    else:
-        path_workspace = path_output / '_temp_eapg_grouper'
-
+    path_workspace = _assign_path_workspace(
+        path_network_io,
+        path_output,
+    )
     path_workspace.mkdir(
         exist_ok=True,
         )
@@ -191,18 +208,14 @@ def run_eapg_grouper(
             )
         )
     rdd_results.count() # Force a realization
-    if not output_struct:
-        output_struct = build_structtype_from_csv(
-            eapg.shared.PATH_SCHEMAS / 'eapgs_out.csv'
-            )
-
+    final_struct = _generate_final_struct(output_struct)
     partitions_output = [
         str(_path)
         for _path in path_workspace.glob('eapgs_out_*.csv')
         ]
     df_eapg_output = sparkapp.session.read.csv(
         partitions_output,
-        schema=output_struct,
+        schema=final_struct,
         header=False,
         )
     sparkapp.save_df(

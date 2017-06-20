@@ -1,0 +1,5 @@
+name,datatype,nullable,subdelimited
+sequencenumber,string,False,true
+int_field,string,True,false
+str_field,string,True,false
+float_field,string,True,false

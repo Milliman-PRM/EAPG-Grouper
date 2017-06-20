@@ -1,0 +1,7 @@
+name,datatype,nullable
+sequencenumber,integer,False
+poa_field_1,string,True
+poa_field_2,string,True
+poa_field_3,string,True
+poa_field_4,string,True
+poa_field_5,string,True

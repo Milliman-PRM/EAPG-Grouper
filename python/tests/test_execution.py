@@ -7,6 +7,8 @@
 """
 # Expecting to test private pieces of module.
 # pylint: disable=protected-access
+
+
 from pathlib import Path
 import filecmp
 
@@ -14,7 +16,7 @@ import pytest
 
 import eapg.execution as execution
 import eapg
-from prm.spark.io_txt import build_structtype_from_csv, import_csv
+from prm.spark.io_txt import build_structtype_from_csv
 # =============================================================================
 # LIBRARIES, LOCATIONS, LITERALS, ETC. GO ABOVE HERE
 # =============================================================================
@@ -145,7 +147,7 @@ def test__run_eapg_subprocess(tmpdir):
         'input_date_format': 'yyyy-MM-dd',
     }
     id_partition = 42
-    output_expected_path = MOCK_DATA_PATH/ 'execution_eapg_out.csv'
+    output_expected_path = MOCK_DATA_PATH / 'execution_eapg_out.csv'
     output_test_path = path_upload
     execution._run_eapg_subprocess(
         id_partition,
@@ -158,6 +160,7 @@ def test__run_eapg_subprocess(tmpdir):
     )  # The two files must be exactly the same.
 
 def test__assign_path_workspace(tmpdir):
+    """test assign path workspace """
     path_output = Path(str(tmpdir))
     none_workspace = path_output / '_temp_eapg_grouper'
     path_network_io = Path('C:/test')
@@ -172,7 +175,9 @@ def test__assign_path_workspace(tmpdir):
         path_output,
     ) == path_network_io
 
-def test__generate_final_struct(mock_schemas):
+def test__generate_final_struct(mock_schemas): # pylint: disable=redefined-outer-name
+    """ test that a final struct is correctly created"""
+
     none_final_struct = build_structtype_from_csv(
         eapg.shared.PATH_SCHEMAS / 'eapgs_out.csv'
 
@@ -186,6 +191,7 @@ def test_run_eapg_grouper(
         spark_app,
         tmpdir
     ):
+    """ test the running of eapg_grouper"""
     input_path = MOCK_DATA_PATH / 'execution_eapg_in.csv'
     output_data_path = Path(str(tmpdir))
     input_struct = build_structtype_from_csv(
@@ -210,17 +216,17 @@ def test_run_eapg_grouper(
     df_eapg_output = execution.run_eapg_grouper(
         spark_app,
         {'claims':df_input_data},
-        output_data_path ,
+        output_data_path,
     )
     df_empty = df_eapg_output.subtract(df_output_data)
     assert df_empty.count() == 0
 
     path_logs = output_data_path / 'logs'
     path_logs.mkdir(exist_ok=True)
-    df_public_logs = execution.run_eapg_grouper(
+    execution.run_eapg_grouper(
         spark_app,
         {'claims':df_input_data},
-        output_data_path ,
+        output_data_path,
         path_logs_public=path_logs,
     )
 

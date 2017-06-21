@@ -17,15 +17,23 @@ import pytest
 import eapg.execution as execution
 import eapg
 from prm.spark.io_txt import build_structtype_from_csv
+
+
+try:
+    _PATH_THIS_FILE = Path(__file__).parent
+except NameError:
+    _PATH_PARTS = list(Path(execution.__file__).parent.parts)
+    _PATH_PARTS[-1] = "tests"
+    _PATH_THIS_FILE = Path(*_PATH_PARTS) # pylint: disable=redefined-variable-type
+
+
+PATH_MOCK_DATA = _PATH_THIS_FILE / 'mock_data'
+PATH_MOCK_SCHEMAS = _PATH_THIS_FILE / 'mock_schemas'
+
+
 # =============================================================================
 # LIBRARIES, LOCATIONS, LITERALS, ETC. GO ABOVE HERE
 # =============================================================================
-try:
-    MOCK_DATA_PATH = Path(__file__).parent / 'mock_data'
-    MOCK_SCHEMAS_PATH = Path(__file__).parent / 'mock_schemas'
-except NameError:
-    pass
-
 def _get_name_from_path(path):
     """Derive data set name from testing file path"""
     return path.stem[path.stem.find("_") + 1:]
@@ -35,7 +43,7 @@ def mock_schemas():
     """Schemas for testing data"""
     return {
         _get_name_from_path(path): build_structtype_from_csv(path)
-        for path in MOCK_SCHEMAS_PATH.glob("shared_*.csv")
+        for path in PATH_MOCK_SCHEMAS.glob("shared_*.csv")
         }
 
 
@@ -72,17 +80,6 @@ def test__compose_cli_parameters(tmpdir):
     path_output_template = execution.PATH_OUTPUT_TEMPLATE
     eapg_version = execution.EAPG_VERSION
     path_logs_public = None
-    output_kwargs = {
-        'input': path_input_file.as_posix(),
-        'input_template': path_input_template.as_posix(),
-        'upload': path_output_file.as_posix(),
-        'upload_template': path_output_template.as_posix(),
-        'input_header': 'off',
-        'schedule': 'off',
-        'grouper': eapg_version,
-        'input_date_format': 'yyyy-MM-dd',
-        'test':True,
-    }
 
     output_sans_kwargs = {
         'input': path_input_file.as_posix(),
@@ -94,7 +91,10 @@ def test__compose_cli_parameters(tmpdir):
         'grouper': eapg_version,
         'input_date_format': 'yyyy-MM-dd',
     }
-
+    kwargs = {
+        'test': True,
+    }
+    output_kwargs = {**output_sans_kwargs, **kwargs}
     assert output_sans_kwargs == execution._compose_cli_parameters(
         id_partition,
         path_input_file,
@@ -126,13 +126,13 @@ def test__compose_eapg_subprocess_args(): # pylint: disable=invalid-name
         options,
     )
     test_odd_index = test_out[1::2]
-    assert len(set(test_out) - set(args)) == 0 #must contain all elements
+    assert not set(test_out) - set(args) #must contain all elements
     assert args[0] == test_out[0] #first argument must be the EAPG_GROUPER path
     assert all(item.startswith('-') for item in test_odd_index) #odd-index must start with '-'
 
 def test__run_eapg_subprocess(tmpdir):
     """test the eapg_subprocess on a single .csv file"""
-    path_input = MOCK_DATA_PATH / 'execution_eapg_in.csv'
+    path_input = PATH_MOCK_DATA / 'execution_eapg_in.csv'
     path_upload = Path(str(tmpdir)) / 'execution_eapg_out.csv'
 
 
@@ -147,7 +147,7 @@ def test__run_eapg_subprocess(tmpdir):
         'input_date_format': 'yyyy-MM-dd',
     }
     id_partition = 42
-    output_expected_path = MOCK_DATA_PATH / 'execution_eapg_out.csv'
+    output_expected_path = PATH_MOCK_DATA / 'execution_eapg_out.csv'
     output_test_path = path_upload
     execution._run_eapg_subprocess(
         id_partition,
@@ -192,7 +192,7 @@ def test_run_eapg_grouper(
         tmpdir
     ):
     """ test the running of eapg_grouper"""
-    input_path = MOCK_DATA_PATH / 'execution_eapg_in.csv'
+    input_path = PATH_MOCK_DATA / 'execution_eapg_in.csv'
     output_data_path = Path(str(tmpdir))
     input_struct = build_structtype_from_csv(
         eapg.shared.PATH_SCHEMAS / 'eapgs_in.csv'
@@ -207,7 +207,7 @@ def test_run_eapg_grouper(
         mode="FAILFAST",
     )
     df_output_data = spark_app.session.read.csv(
-        str(MOCK_DATA_PATH / 'execution_eapg_out.csv'),
+        str(PATH_MOCK_DATA / 'execution_eapg_out.csv'),
         schema=output_struct,
         header=True,
         mode="FAILFAST",

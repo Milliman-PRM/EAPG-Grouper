@@ -10,7 +10,6 @@
 import logging
 import typing
 import subprocess
-import os
 import shutil
 from pathlib import Path
 from functools import partial
@@ -26,9 +25,9 @@ LOGGER = logging.getLogger(__name__)
 EAPG_VERSION = '17039'
 PATH_EAPG_GROUPER = Path(r'C:\Program Files\3mhis\v2017.1.2\cgs\cgs_console.exe')
 
-PATH_TEMPLATES = Path(os.environ['eapg_grouper_home']) / 'templates'
-PATH_INPUT_TEMPLATE = PATH_TEMPLATES / 'prm_eapgs_in.2017.1.2.dic'
-PATH_OUTPUT_TEMPLATE = PATH_TEMPLATES / 'prm_eapgs_out.2017.1.2.dic'
+PATH_TEMPLATES = eapg.shared.PATH_TEMPLATES
+PATH_INPUT_TEMPLATE = eapg.shared.PATH_INPUT_TEMPLATE
+PATH_OUTPUT_TEMPLATE = eapg.shared.PATH_OUTPUT_TEMPLATE
 
 # pylint: disable=no-member
 
@@ -153,18 +152,29 @@ def _run_eapg_grouper_on_partition(# pylint: disable=too-many-locals
 
 def _assign_path_workspace(
         path_network_io: typing.Optional[Path],
-        path_output: typing.Optional[Path],
+        path_output: Path,
     ) -> Path:
     if path_network_io:
+
+        LOGGER.info('workspace is set to %s',
+                    str(path_network_io),
+                   )
         path_workspace = path_network_io
     else:
+        LOGGER.info('path_network_io was not set, thus workspace is set to %s',
+                    str(path_output / 'temp_eapg_grouper'),
+                   )
         path_workspace = path_output / '_temp_eapg_grouper'
     return path_workspace
 
 def _generate_final_struct(
         output_struct: typing.Optional[spark_types.StructType],
     )-> spark_types.StructType:
+    """ Generate structtypes based on whether user-gives struct"""
     if not output_struct:
+        LOGGER.info("output_struct not defined, faulting to %s",
+                    str(eapg.shared.PATH_SCHEMAS / 'eapgs_out.csv')
+                   )
         return build_structtype_from_csv(
             eapg.shared.PATH_SCHEMAS / 'eapgs_out.csv'
         )
@@ -190,7 +200,7 @@ def run_eapg_grouper(
     path_workspace.mkdir(
         exist_ok=True,
         )
-
+    LOGGER.info('Turning Claims Dataframe to RDD')
     rdd_claims = input_dataframes['claims'].rdd.mapPartitions(
         partial(
             encode_rows_to_strings,
@@ -198,6 +208,7 @@ def run_eapg_grouper(
             delimiter_csv=',',
             )
         )
+    LOGGER.info('Submitting Claims RDD Partitions to eapg grouper.')
     rdd_results = rdd_claims.mapPartitionsWithIndex(
         partial(
             _run_eapg_grouper_on_partition,

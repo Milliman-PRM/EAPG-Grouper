@@ -19,6 +19,11 @@ from prm.spark.io_txt import build_structtype_from_csv
 
 LOGGER = logging.getLogger(__name__)
 
+PATH_TEMPLATES = Path(os.environ['eapg_grouper_home']) / 'templates'
+PATH_INPUT_TEMPLATE = PATH_TEMPLATES / 'prm_eapgs_in.2017.1.2.dic'
+PATH_OUTPUT_TEMPLATE = PATH_TEMPLATES / 'prm_eapgs_out.2017.1.2.dic'
+
+
 DAYS_PER_YEAR = 365.25
 N_ICD_COLUMNS = 24
 

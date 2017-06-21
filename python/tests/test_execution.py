@@ -14,7 +14,7 @@ import pytest
 
 import eapg.execution as execution
 import eapg
-from prm.spark.io_txt import build_structtype_from_csv
+from prm.spark.io_txt import build_structtype_from_csv, import_csv
 # =============================================================================
 # LIBRARIES, LOCATIONS, LITERALS, ETC. GO ABOVE HERE
 # =============================================================================
@@ -46,7 +46,7 @@ def test__public_log_parameters(tmpdir):
 
     expected_true_dict = {
         'error_log': true_test_path / 'error_log_{}.txt'.format(id_partition),
-        'edit_log': true_test_path / 'edit_log_{}.txt'.format(id_partition) 
+        'edit_log': true_test_path / 'edit_log_{}.txt'.format(id_partition)
     }
 
     expected_false_dict = dict()
@@ -181,3 +181,48 @@ def test__generate_final_struct(mock_schemas):
 
     assert execution._generate_final_struct(None) == none_final_struct
     assert execution._generate_final_struct(output_final_struct) == output_final_struct
+
+def test_run_eapg_grouper(
+        spark_app,
+        tmpdir
+    ):
+    input_path = MOCK_DATA_PATH / 'execution_eapg_in.csv'
+    output_data_path = Path(str(tmpdir))
+    input_struct = build_structtype_from_csv(
+        eapg.shared.PATH_SCHEMAS / 'eapgs_in.csv'
+    )
+    output_struct = build_structtype_from_csv(
+        eapg.shared.PATH_SCHEMAS /'eapgs_out.csv'
+    )
+    df_input_data = spark_app.session.read.csv(
+        str(input_path),
+        schema=input_struct,
+        header=True,
+        mode="FAILFAST",
+    )
+    df_output_data = spark_app.session.read.csv(
+        str(MOCK_DATA_PATH / 'execution_eapg_out.csv'),
+        schema=output_struct,
+        header=True,
+        mode="FAILFAST",
+    )
+
+    df_eapg_output = execution.run_eapg_grouper(
+        spark_app,
+        {'claims':df_input_data},
+        output_data_path ,
+    )
+    df_empty = df_eapg_output.subtract(df_output_data)
+    assert df_empty.count() == 0
+
+    path_logs = output_data_path / 'logs'
+    path_logs.mkdir(exist_ok=True)
+    df_public_logs = execution.run_eapg_grouper(
+        spark_app,
+        {'claims':df_input_data},
+        output_data_path ,
+        path_logs_public=path_logs,
+    )
+
+    assert (path_logs / 'error_log_0.txt').exists()
+    assert (path_logs / 'edit_log_0.txt').exists()

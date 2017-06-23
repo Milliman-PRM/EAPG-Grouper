@@ -1,5 +1,5 @@
 """
-### CODE OWNERS: Ben Copeland, Chas Busenburg 
+### CODE OWNERS: Ben Copeland, Chas Busenburg
 
 ### OBJECTIVE:
   Test shared functions for EAPG grouper
@@ -205,7 +205,11 @@ def test_get_standard_inputs_from_prm(
         return dataframe.select(col_select)
 
     # Test after rounding floats and forcing string columns to empty strings
-    assert _round_float_cols(df_results.fillna('')).subtract(
+    assert _round_float_cols(df_results['claims'].fillna('')).subtract(
         _round_float_cols(mock_dataframes['expected_input'].fillna(''))
+        ).count() == 0
+
+    assert df_results['base_table'].subtract(
+        mock_dataframes['base_table']
         ).count() == 0
 

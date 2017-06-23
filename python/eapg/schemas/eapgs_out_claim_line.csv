@@ -1,0 +1,5 @@
+name,datatype,nullable
+sequencenumber,string,True
+finaleapg,string,True
+finaleapgtype,string,True
+finaleapgcategory,string,True

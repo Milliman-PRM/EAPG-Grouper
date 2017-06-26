@@ -1,0 +1,56 @@
+EAPG Category,Description
+1,Skin and integumentary system procedures
+2,Breast procedures
+3,Musculoskeletal system procedures
+4,Respiratory procedures
+5,Cardiovascular procedures
+6,"Hematologic, lymphatic, and endocrine procedures"
+7,Gastrointestinal system procedures
+8,Genitourinary system procedures
+9,Male Reproductive system procedures
+10,Female Reproductive system procedures
+11,Neurologic system procedures
+12,Ophthalmologic system procedures
+13,Otolaryngologic system procedures
+14,Rehabilitation
+15,Radiologic procedures
+16,Mental illness and substance abuse therapies
+17,Nuclear Medicine
+18,Radiation Therapy
+19,Dental procedures
+20,Anesthesia
+21,Pathology
+22,Laboratory
+23,Other ancillary tests and procedures
+24,Chemotherapy and other drugs
+25,Radiology
+30,Incidental procedures and services
+50,Observation
+51,"Major signs, symptoms and findings"
+52,Diseases and disorders of the nervous system
+53,Diseases and disorders of the eye
+54,"Ear, nose, mouth, throat and craniofacial diseases and disorders"
+55,Diseases and disorders of the respiratory system
+56,Diseases and disorders of the circulatory system
+57,Diseases and disorders of the digestive system
+58,Diseases and disorders of the hepatobiliary system and pancreas
+59,Diseases and disorders of the musculoskeletal system and connective tissue
+60,"Diseases and disorders of the skin, subcutaneous tissue and breast"
+61,"Endocrine, nutritional and metabolic diseases and disorders"
+62,Diabetes Mellitus
+63,Diseases and disorders of the kidney and urinary tract
+64,Diseases and disorders of the male reproductive system
+65,Diseases and disorders of the female reproductive system
+66,"Pregnancy, childbirth and the puerperium"
+67,Neonates
+68,"Diseases and disorders of blood, blood forming organs and immunologic disorders"
+69,"Lymphatic, hematopoietic, other malignancies, chemotherapy and radiotherapy"
+70,"Infectious and parasitic diseases, systemic or unspecified sites"
+71,Mental diseases and disorders
+72,Alcohol/drug use and alcohol/drug induced organic mental disorders
+73,"Poisonings, toxic effects, other injuries and other complications of treatment"
+74,Burns
+75,"Rehabilitation, aftercare, other factors influencing health status and other health services"
+76,Human immunodeficiency virus infections
+77,Preventive Medicine Services
+99,No APG assigned

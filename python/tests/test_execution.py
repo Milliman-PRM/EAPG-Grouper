@@ -260,3 +260,24 @@ def test_run_eapg_grouper(
 
     assert (path_logs / 'error_log_0.txt').exists()
     assert (path_logs / 'edit_log_0.txt').exists()
+
+def test__add_description_to_output(
+        spark_app,
+        tmpdir,
+       ):
+    input_path = PATH_MOCK_DATA / 'execution_eapg_out.csv'
+    output_path = PATH_MOCK_DATA / 'execution_description_out.csv'
+    input_struct = build_structtype_from_csv(
+        eapg.shared.PATH_SCHEMAS / 'eapgs_out.csv'
+    )
+    df_input_data = spark_app.session.read.csv(
+        str(input_path),
+        schema=input_struct,
+        header=True,
+        mode="FAILFAST",
+    )
+    df_empty_false = df_input_data.subtract(
+        execution._add_description_to_output(False,df_input_data)
+    )
+    assert not df_empty_false.count() #if add_description_bool is False should return the same dataframe
+

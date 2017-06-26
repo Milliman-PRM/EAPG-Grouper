@@ -1,6 +1,0 @@
-name,datatype,nullable
-EAPG,integer,False
-EAPGDesc,string,False
-EAPG Type,integer,False
-EAPG Category,integer,False
-EAPG Service Line,integer,False

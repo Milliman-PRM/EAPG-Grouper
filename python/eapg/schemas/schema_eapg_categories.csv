@@ -1,0 +1,3 @@
+name,datatype,nullable
+EAPG Category,string,FALSE
+Description,string,FALSE

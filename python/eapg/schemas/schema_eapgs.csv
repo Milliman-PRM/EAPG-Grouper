@@ -1,0 +1,6 @@
+name,datatype,nullable
+EAPG,string,FALSE
+EAPGDesc,string,FALSE
+EAPG Type,string,FALSE
+EAPG Category,string,FALSE
+EAPG Service Line,string,FALSE

@@ -16,13 +16,13 @@ import pyspark.sql
 import pyspark.sql.functions as spark_funcs
 import pyspark.sql.types as spark_types
 from prm.spark.io_txt import build_structtype_from_csv
+from prm.spark.app import SparkApp
 
 LOGGER = logging.getLogger(__name__)
 
 PATH_TEMPLATES = Path(os.environ['eapg_grouper_home']) / 'templates'
 PATH_INPUT_TEMPLATE = PATH_TEMPLATES / 'prm_eapgs_in.2017.1.2.dic'
 PATH_OUTPUT_TEMPLATE = PATH_TEMPLATES / 'prm_eapgs_out.2017.1.2.dic'
-
 
 DAYS_PER_YEAR = 365.25
 N_ICD_COLUMNS = 24
@@ -35,6 +35,7 @@ except NameError: # pragma: no cover
     _PATH_PARENT = Path(eapg.__file__).parent
 
 PATH_SCHEMAS = _PATH_PARENT / 'schemas'
+PATH_DESCRIPTIONS = _PATH_PARENT / 'data' / 'support_files'
 
 # pylint: disable=no-member
 
@@ -305,6 +306,56 @@ def get_standard_inputs_from_prm(
     outputs['base_table'] = input_dataframes['outclaims_prm'].select('sequencenumber')
 
     return outputs
+
+def get_descriptions_dfs(
+        sparkapp: SparkApp,
+       ) -> ("pyspark.sql.DataFrames",
+             "pyspark.sql.DataFrames",
+             "pyspark.sql.DataFrames"
+            ):
+    path_eapgs = PATH_DESCRIPTIONS / "eapgs.csv"
+    path_eapg_types = PATH_DESCRIPTIONS / "eapg_types.csv"
+    path_eapg_categories = PATH_DESCRIPTIONS / "eapg_categories.csv"
+
+    path_eapg_struct = PATH_SCHEMAS / "schema_eapgs.csv"
+    path_eapg_types_struct = PATH_SCHEMAS / "schema_eapg_types.csv"
+    path_eapg_categories_struct = PATH_SCHEMAS / "schema_eapg_categories.csv"
+
+    struct_eapg = build_structtype_from_csv(
+        path_eapg_struct,
+       )
+    struct_eapg_types = build_structtype_from_csv(
+        path_eapg_types_struct,
+       )
+    struct_eapg_categories = build_structtype_from_csv(
+        path_eapg_categories_struct,
+       )
+
+    df_eapgs = sparkapp.session.read.csv(
+        str(path_eapgs),
+        schema = struct_eapg,
+        header=True,
+        mode="FAILFAST",
+    )
+
+    df_eapgs_types = sparkapp.session.read.csv(
+        str(path_eapg_types),
+        schema=struct_eapg_types,
+        header=True,
+        mode="FAILFAST",
+    )
+
+    df_eapg_categories = sparkapp.session.read.csv(
+        str(path_eapg_categories),
+        schema=struct_eapg_categories,
+        header=True,
+        mode="FAILFAST"
+    )
+
+    return (df_eapgs,
+            df_eapgs_types,
+            df_eapg_categories,
+           )
 
 if __name__ == 'main':
     pass

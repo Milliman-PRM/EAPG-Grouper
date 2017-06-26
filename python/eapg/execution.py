@@ -190,6 +190,7 @@ def run_eapg_grouper(
         path_logs_public: typing.Optional[Path]=None,
         cleanup_claim_copies: bool=True,
         output_struct: typing.Optional[spark_types.StructType]=None,
+        add_Description: bool=True,
         **kwargs_eapg
     ) -> "typing.Mapping[str, pyspark.sql.DataFrame]":
     """Execute the EAPG software"""
@@ -240,7 +241,14 @@ def run_eapg_grouper(
     return df_eapg_output
 
 
+def _add_description_to_output(description_bool: bool,
+                               df_input: ):
+    """Adds the description of the EAPG code,category, and """
 
+    if description_bool:
+        pass
+    else:
+        return df_input
 
 if __name__ == 'main':
     pass

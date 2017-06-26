@@ -309,10 +309,11 @@ def get_standard_inputs_from_prm(
 
 def get_descriptions_dfs(
         sparkapp: SparkApp,
-       ) -> ("pyspark.sql.DataFrames",
-             "pyspark.sql.DataFrames",
-             "pyspark.sql.DataFrames"
-            ):
+) -> ("pyspark.sql.DataFrames",
+      "pyspark.sql.DataFrames",
+      "pyspark.sql.DataFrames"
+     ):
+    """ Returns the dataframes for eapgs,eapg types, and eapg categories"""
     path_eapgs = PATH_DESCRIPTIONS / "eapgs.csv"
     path_eapg_types = PATH_DESCRIPTIONS / "eapg_types.csv"
     path_eapg_categories = PATH_DESCRIPTIONS / "eapg_categories.csv"
@@ -323,17 +324,17 @@ def get_descriptions_dfs(
 
     struct_eapg = build_structtype_from_csv(
         path_eapg_struct,
-       )
+        )
     struct_eapg_types = build_structtype_from_csv(
         path_eapg_types_struct,
-       )
+        )
     struct_eapg_categories = build_structtype_from_csv(
         path_eapg_categories_struct,
-       )
+        )
 
     df_eapgs = sparkapp.session.read.csv(
         str(path_eapgs),
-        schema = struct_eapg,
+        schema=struct_eapg,
         header=True,
         mode="FAILFAST",
     )

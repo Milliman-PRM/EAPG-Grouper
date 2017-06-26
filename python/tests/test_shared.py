@@ -214,6 +214,7 @@ def test_get_standard_inputs_from_prm(
         ).count() == 0
 
 def test_get_description_dfs(spark_app):
+    """ test get_descriptions_dfs by creating own dfs and comparing"""
     path_eapgs = eapg.shared.PATH_DESCRIPTIONS / "eapgs.csv"
     path_eapg_types = eapg.shared.PATH_DESCRIPTIONS / "eapg_types.csv"
     path_eapg_categories = eapg.shared.PATH_DESCRIPTIONS / "eapg_categories.csv"
@@ -224,17 +225,17 @@ def test_get_description_dfs(spark_app):
 
     struct_eapg = build_structtype_from_csv(
         path_eapg_struct,
-       )
+        )
     struct_eapg_types = build_structtype_from_csv(
         path_eapg_types_struct,
-       )
+        )
     struct_eapg_categories = build_structtype_from_csv(
         path_eapg_categories_struct,
-       )
+        )
 
     df_eapgs = spark_app.session.read.csv(
         str(path_eapgs),
-        schema = struct_eapg,
+        schema=struct_eapg,
         header=True,
         mode="FAILFAST",
     )
@@ -254,7 +255,7 @@ def test_get_description_dfs(spark_app):
     )
 
 
-    tv1,tv2,tv3 = eapg.shared.get_descriptions_dfs(spark_app)
+    tv1, tv2, tv3 = eapg.shared.get_descriptions_dfs(spark_app)
     tv1_zero = df_eapgs.subtract(tv1).count()
     tv2_zero = df_eapgs_types.subtract(tv2).count()
     tv3_zero = df_eapg_categories.subtract(tv3).count()

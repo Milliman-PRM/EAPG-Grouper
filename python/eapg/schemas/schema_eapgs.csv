@@ -1,6 +1,6 @@
 name,datatype,nullable
-EAPG,string,FALSE
-EAPGDesc,string,FALSE
-EAPG Type,string,FALSE
-EAPG Category,string,FALSE
-EAPG Service Line,string,FALSE
+finaleapg,string,FALSE
+eapg_description,string,FALSE
+finaleapgtype,string,FALSE
+finaleapgcategory,string,FALSE
+eapg_service_line,string,FALSE

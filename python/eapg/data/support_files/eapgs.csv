@@ -1,4 +1,4 @@
-EAPG,EAPGDesc,EAPG Type,EAPG Category,EAPG Service Line
+finaleapg,eapg_description,finaleapgtype,finaleapgcategory,eapg_service_line
 1,PHOTOCHEMOTHERAPY,2,1,1
 2,SUPERFICIAL NEEDLE BIOPSY AND ASPIRATION,2,1,2
 3,LEVEL I SKIN INCISION AND DRAINAGE,2,1,2

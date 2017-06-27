@@ -210,7 +210,7 @@ def run_eapg_grouper(
         path_logs_public: typing.Optional[Path]=None,
         cleanup_claim_copies: bool=True,
         output_struct: typing.Optional[spark_types.StructType]=None,
-        add_Description: bool=True,
+        add_description: bool=True,
         **kwargs_eapg
     ) -> "typing.Mapping[str, pyspark.sql.DataFrame]":
     """Execute the EAPG software"""
@@ -310,12 +310,17 @@ def run_eapg_grouper(
     df_base_w_eapgs.validate.assert_no_nulls(
         df_base_w_eapgs.columns,
         )
-    #TODO insert call and transformation using add_description_to_output
-    sparkapp.save_df(
+
+    df_base = _add_description_to_output(
+        sparkapp,
+        add_description,
         df_base_w_eapgs,
+    )
+    sparkapp.save_df(
+        df_base,
         path_output / 'eapgs_claim_line_level.parquet',
         )
-    outputs['eapgs_claim_line_level'] = df_base_w_eapgs
+    outputs['eapgs_claim_line_level'] = df_base
 
     if cleanup_claim_copies:
         shutil.rmtree(str(path_workspace))

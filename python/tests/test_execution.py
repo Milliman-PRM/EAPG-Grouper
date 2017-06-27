@@ -298,6 +298,8 @@ def test__add_description_to_output(
             df_input_data,
         )
     )
+    assert not df_true.count()
+
 def test__join_description_to_output(spark_app):
     """ test the joining of the description dfs to an output"""
     path_test_schema = PATH_MOCK_SCHEMAS / 'schema_eapg_desc_out.csv'

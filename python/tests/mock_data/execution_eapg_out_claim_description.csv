@@ -1,0 +1,17 @@
+finaleapgcategory,finaleapgtype,finaleapg,sequence,eapg_description,eapg_service_line,eapg_type_description,eapg_category_description
+77,3,876,2000001,ADULT PREVENTIVE MEDICINE,12,Medical Visit,Preventive Medicine Services
+30,5,491,3000003,MEDICAL VISIT INDICATOR,9,Incidental,Incidental procedures and services
+1,2,6,3000004,LEVEL I SKIN DEBRIDEMENT AND DESTRUCTION,2,Significant Procedure,Skin and integumentary system procedures
+23,4,457,3000014,VENIPUNCTURE,9,Ancillary,Other ancillary tests and procedures
+11,2,220,4000006,"LEVEL II NERVOUS SYSTEM INJECTIONS, STIMULATIONS OR CRANIAL TAP",20,Significant Procedure,Neurologic system procedures
+11,2,220,4000007,"LEVEL II NERVOUS SYSTEM INJECTIONS, STIMULATIONS OR CRANIAL TAP",20,Significant Procedure,Neurologic system procedures
+11,2,220,4000008,"LEVEL II NERVOUS SYSTEM INJECTIONS, STIMULATIONS OR CRANIAL TAP",20,Significant Procedure,Neurologic system procedures
+11,2,220,4000009,"LEVEL II NERVOUS SYSTEM INJECTIONS, STIMULATIONS OR CRANIAL TAP",20,Significant Procedure,Neurologic system procedures
+11,2,220,4000010,"LEVEL II NERVOUS SYSTEM INJECTIONS, STIMULATIONS OR CRANIAL TAP",20,Significant Procedure,Neurologic system procedures
+11,2,220,4000011,"LEVEL II NERVOUS SYSTEM INJECTIONS, STIMULATIONS OR CRANIAL TAP",20,Significant Procedure,Neurologic system procedures
+30,5,490,4000012,INCIDENTAL TO MEDICAL VISIT OR SIGNIFICANT PROCEDURE,9,Incidental,Incidental procedures and services
+30,5,490,4000013,INCIDENTAL TO MEDICAL VISIT OR SIGNIFICANT PROCEDURE,9,Incidental,Incidental procedures and services
+99,8,999,4000014,UNASSIGNED,99,Unassigned,No APG assigned
+23,4,425,4000015,LEVEL I OTHER MISCELLANEOUS ANCILLARY PROCEDURES,9,Ancillary,Other ancillary tests and procedures
+1,2,5,5000005,NAIL PROCEDURES,2,Significant Procedure,Skin and integumentary system procedures
+0,0,0,800005,Claim could not be processed,Claim could not be processed,Claim could not be processed,Claim could not be processed

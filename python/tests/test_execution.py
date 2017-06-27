@@ -18,7 +18,7 @@ import pyspark.sql.functions as spark_funcs
 import eapg.execution as execution
 import eapg
 from prm.spark.io_txt import build_structtype_from_csv
-
+from prm.spark.io_txt import import_csv
 
 try:
     _PATH_THIS_FILE = Path(__file__).parent
@@ -263,12 +263,10 @@ def test_run_eapg_grouper(
 
 def test__add_description_to_output(
         spark_app,
-        tmpdir,
-       ):
-    input_path = PATH_MOCK_DATA / 'execution_eapg_out.csv'
-    output_path = PATH_MOCK_DATA / 'execution_description_out.csv'
+    ):
+    input_path = PATH_MOCK_DATA / 'execution_eapg_out_claim_line.csv'
     input_struct = build_structtype_from_csv(
-        eapg.shared.PATH_SCHEMAS / 'eapgs_out.csv'
+        PATH_MOCK_SCHEMAS / 'execution_eapg_out_claim_line.csv'
     )
     df_input_data = spark_app.session.read.csv(
         str(input_path),
@@ -277,7 +275,52 @@ def test__add_description_to_output(
         mode="FAILFAST",
     )
     df_empty_false = df_input_data.subtract(
-        execution._add_description_to_output(False,df_input_data)
+        execution._add_description_to_output(
+            spark_app,
+            False,
+            df_input_data,
+        )
     )
-    assert not df_empty_false.count() #if add_description_bool is False should return the same dataframe
+    assert not df_empty_false.count() #if add_description_bool is False should return the same
+    output_path = PATH_MOCK_DATA / 'execution_eapg_out_claim_description.csv'
+    output_struct_path = PATH_MOCK_SCHEMAS / 'schema_eapg_desc_out.csv'
+    output_struct = build_structtype_from_csv(output_struct_path)
+    df_output = spark_app.session.read.csv(
+        str(output_path),
+        schema=output_struct,
+        header=True,
+    )
+    df_true = df_output.subtract(
+        execution._add_description_to_output(
+            spark_app,
+            True,
+            df_input_data,
+        )
+    )
+def test__join_description_to_output(spark_app):
+    """ test the joining of the description dfs to an output"""
+    path_test_schema = PATH_MOCK_SCHEMAS / 'schema_eapg_desc_out.csv'
+    test_schema = build_structtype_from_csv(path_test_schema)
+    df_test = spark_app.session.read.csv(
+        str(PATH_MOCK_DATA / 'execution_eapg_out_claim_description.csv'),
+        schema=test_schema,
+        header=True,
+    )
 
+    path_input_schema = PATH_MOCK_SCHEMAS / 'execution_eapg_out_claim_line.csv'
+    input_schema = build_structtype_from_csv(path_input_schema)
+
+    df_input = spark_app.session.read.csv(
+        str(PATH_MOCK_DATA / 'execution_eapg_out_claim_line.csv'),
+        schema=input_schema,
+        header=True,
+    )
+
+    df_output = execution._join_description_to_output(
+        spark_app,
+        df_input,
+    )
+
+    count = df_test.subtract(df_output).count()
+
+    assert not count #Test and input do not match

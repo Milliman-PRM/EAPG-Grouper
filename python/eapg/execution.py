@@ -310,6 +310,7 @@ def run_eapg_grouper(
     df_base_w_eapgs.validate.assert_no_nulls(
         df_base_w_eapgs.columns,
         )
+    #TODO insert call and transformation using add_description_to_output
     sparkapp.save_df(
         df_base_w_eapgs,
         path_output / 'eapgs_claim_line_level.parquet',
@@ -320,14 +321,45 @@ def run_eapg_grouper(
         shutil.rmtree(str(path_workspace))
 
     return outputs
-def _add_description_to_output(description_bool: bool,
-                               df_input: ):
-    """Adds the description of the EAPG code,category, and """
 
+def _add_description_to_output(
+        sparkapp: SparkApp,
+        description_bool: bool,
+        df_input: "pyspark.sql.DataFrame",
+        ) -> "pyspark.sql.DataFrame":
+    """Adds the description of the EAPG code,category, and """
     if description_bool:
-        pass
+        return _join_description_to_output(sparkapp,
+                                           df_input,
+                                          )
     else:
         return df_input
+
+def _join_description_to_output(
+        sparkapp: SparkApp,
+        df_input: "pyspark.sql.DataFrame",
+       ) -> "pyspark.sql.DataFrame":
+    """ Combines Description Dataframes with input"""
+    df_eapg, df_type, df_category = eapg.shared.get_descriptions_dfs(sparkapp)
+
+    df_with_eapg = df_input.join(
+        df_eapg,
+        ['finaleapg','finaleapgtype','finaleapgcategory'],
+        'left',
+    )
+    df_with_eapg_type = df_with_eapg.join(
+        df_type,
+        ['finaleapgtype'],
+        'left',
+    )
+    df_with_category = df_with_eapg_type.join(
+        df_category,
+        ['finaleapgcategory'],
+        'left'
+    )
+
+    df_output = df_with_category.fillna('Claim could not be processed')
+    return df_output
 
 if __name__ == 'main':
     pass

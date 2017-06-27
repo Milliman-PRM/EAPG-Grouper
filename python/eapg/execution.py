@@ -331,7 +331,7 @@ def _add_description_to_output(
         sparkapp: SparkApp,
         description_bool: bool,
         df_input: "pyspark.sql.DataFrame",
-        ) -> "pyspark.sql.DataFrame":
+    ) -> "pyspark.sql.DataFrame":
     """Adds the description of the EAPG code,category, and """
     if description_bool:
         return _join_description_to_output(sparkapp,
@@ -343,13 +343,13 @@ def _add_description_to_output(
 def _join_description_to_output(
         sparkapp: SparkApp,
         df_input: "pyspark.sql.DataFrame",
-       ) -> "pyspark.sql.DataFrame":
+    ) -> "pyspark.sql.DataFrame":
     """ Combines Description Dataframes with input"""
     df_eapg, df_type, df_category = eapg.shared.get_descriptions_dfs(sparkapp)
 
     df_with_eapg = df_input.join(
         df_eapg,
-        ['finaleapg','finaleapgtype','finaleapgcategory'],
+        ['finaleapg', 'finaleapgtype', 'finaleapgcategory'],
         'left',
     )
     df_with_eapg_type = df_with_eapg.join(

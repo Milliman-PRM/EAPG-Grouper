@@ -18,7 +18,6 @@ import pyspark.sql.functions as spark_funcs
 import eapg.execution as execution
 import eapg
 from prm.spark.io_txt import build_structtype_from_csv
-from prm.spark.io_txt import import_csv
 
 try:
     _PATH_THIS_FILE = Path(__file__).parent
@@ -264,6 +263,7 @@ def test_run_eapg_grouper(
 def test__add_description_to_output(
         spark_app,
     ):
+    """test function that checks description output to test files."""
     input_path = PATH_MOCK_DATA / 'execution_eapg_out_claim_line.csv'
     input_struct = build_structtype_from_csv(
         PATH_MOCK_SCHEMAS / 'execution_eapg_out_claim_line.csv'
@@ -282,6 +282,7 @@ def test__add_description_to_output(
         )
     )
     assert not df_empty_false.count() #if add_description_bool is False should return the same
+
     output_path = PATH_MOCK_DATA / 'execution_eapg_out_claim_description.csv'
     output_struct_path = PATH_MOCK_SCHEMAS / 'schema_eapg_desc_out.csv'
     output_struct = build_structtype_from_csv(output_struct_path)

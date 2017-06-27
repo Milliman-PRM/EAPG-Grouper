@@ -348,17 +348,17 @@ def _join_description_to_output(
     df_eapg, df_type, df_category = eapg.shared.get_descriptions_dfs(sparkapp)
 
     df_with_eapg = df_input.join(
-        df_eapg,
+        spark_funcs.broadcast(df_eapg),
         ['finaleapg', 'finaleapgtype', 'finaleapgcategory'],
         'left',
     )
     df_with_eapg_type = df_with_eapg.join(
-        df_type,
+        spark_funcs.broadcast(df_type),
         ['finaleapgtype'],
         'left',
     )
     df_with_category = df_with_eapg_type.join(
-        df_category,
+        spark_funcs.broadcast(df_category),
         ['finaleapgcategory'],
         'left'
     )

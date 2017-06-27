@@ -238,6 +238,7 @@ def test_run_eapg_grouper(
         spark_app,
         input_dataframes,
         output_data_path,
+        add_description=False,
     )
     df_wide_misses = df_eapg_output['eapgs_claim_level'].subtract(
         df_output_data_claim

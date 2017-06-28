@@ -156,7 +156,7 @@ def get_standard_inputs_from_prm(
                 spark_funcs.collect_list(
                     spark_funcs.coalesce(
                         spark_funcs.col(col),
-                        spark_funcs.lit('XX'), # Empty string to force semi-colon delimiter
+                        spark_funcs.lit(''), # Empty string to force semi-colon delimiter
                         )
                     )
                 ).alias('{}_concat'.format(col))

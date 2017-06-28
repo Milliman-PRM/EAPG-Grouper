@@ -260,3 +260,18 @@ def test_run_eapg_grouper(
 
     assert (path_logs / 'error_log_0.txt').exists()
     assert (path_logs / 'edit_log_0.txt').exists()
+
+def test__transpose_results():
+    """Tests converting number of arrays to array of tuples with same length"""
+
+    test_out = [
+        (1, 4, 7),
+        (2, 5, 8),
+        (3, 6, 9),
+        (4, 7, 10),
+    ]
+    assert execution._transpose_results(
+        [1, 2, 3, 4],
+        [4, 5, 6, 7],
+        [7, 8, 9, 10],
+    ) == test_out

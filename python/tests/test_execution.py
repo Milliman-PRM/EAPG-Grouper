@@ -278,7 +278,7 @@ def test_run_eapg_grouper(
 def test__transpose_results():
     """Tests converting number of arrays to array of tuples with same length"""
 
-    test_out = [
+    test_standard = [
         (1, 4, 7),
         (2, 5, 8),
         (3, 6, 9),
@@ -288,4 +288,21 @@ def test__transpose_results():
         [1, 2, 3, 4],
         [4, 5, 6, 7],
         [7, 8, 9, 10],
-    ) == test_out
+    ) == test_standard
+
+    with pytest.raises(
+        IndexError,
+        message='Expecting Column lengths to be shorter than first'
+    ):
+        execution._transpose_results(
+            [1, 2, 3],
+            [1, 2]
+        )
+    with pytest.raises(
+        IndexError,
+        message='Expecting Column to be larger than first column '
+    ):
+        execution._transpose_results(
+            [1, 2],
+            [1, 2, 3]
+        )

@@ -195,6 +195,8 @@ def _transpose_results(
     for i in range(n_lines):
         sub_output = list()
         for values in cols:
+            if len(values) > n_lines:
+                raise IndexError('No value can be longer than first cols input')
             sub_output.append(values[i])
         output.append(tuple(sub_output))
 

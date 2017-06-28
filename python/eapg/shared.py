@@ -182,8 +182,8 @@ def get_standard_inputs_from_prm(
                 }
             ],
         spark_funcs.first('providerid').alias('nationalprovideridentifier'),
-        spark_funcs.first('prm_fromdate_claim').alias('admitdate'),
-        spark_funcs.first('prm_todate_claim').alias('dischargedate'),
+        spark_funcs.min('prm_fromdate_claim').alias('admitdate'),
+        spark_funcs.max('prm_todate_claim').alias('dischargedate'),
         spark_funcs.first('billtype').alias('typeofbill'),
         spark_funcs.first('dischargestatus').alias('dischargestatus'),
         spark_funcs.sum('mr_paid').alias('totalcharges'),

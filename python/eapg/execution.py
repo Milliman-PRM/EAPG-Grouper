@@ -189,6 +189,8 @@ def _transpose_results(
         Convert a number of arrays of same length to an array of tuples with
         the same length
     """
+
+    assert all([len(col) == len(cols[0]) for col in cols]), "All items should be same length as first"
     n_lines = len(cols[0])
 
     output = list()
@@ -214,6 +216,10 @@ def run_eapg_grouper(
         **kwargs_eapg
     ) -> "typing.Mapping[str, pyspark.sql.DataFrame]":
     """Execute the EAPG software"""
+
+    assert "claims" in input_dataframes, "'claims' must be in input_dataframes"
+    assert "base_table" in input_dataframes, "'base_table' must be in input dataframes"
+
     outputs = dict()
     path_workspace = _assign_path_workspace(
         path_network_io,

@@ -192,6 +192,8 @@ def test_run_eapg_grouper(
         tmpdir
     ):
     """ test the running of eapg_grouper"""
+
+
     input_path = PATH_MOCK_DATA / 'execution_eapg_in.csv'
     output_data_path = Path(str(tmpdir))
     input_struct = build_structtype_from_csv(
@@ -234,6 +236,18 @@ def test_run_eapg_grouper(
         mode="FAILFAST",
     )
 
+    with pytest.raises(AssertionError, message = "Expecting base_table not to exist in input_df"): #
+        execution.run_eapg_grouper(
+            spark_app,
+            {'claims':df_input_data},
+            output_data_path,
+    )
+    with pytest.raises(AssertionError, message = "Expecting claims to not exist in input_df"):
+        execution.run_eapg_grouper(
+            spark_app,
+            {'base_table':base_table},
+            output_data_path,
+    )
     df_eapg_output = execution.run_eapg_grouper(
         spark_app,
         input_dataframes,
@@ -328,3 +342,35 @@ def test__join_description_to_output(spark_app):
     count = df_test.subtract(df_output).count()
 
     assert not count #Test and input do not match
+
+    def test__transpose_results():
+    """Tests converting number of arrays to array of tuples with same length"""
+
+    test_standard = [
+        (1, 4, 7),
+        (2, 5, 8),
+        (3, 6, 9),
+        (4, 7, 10),
+    ]
+    assert execution._transpose_results(
+        [1, 2, 3, 4],
+        [4, 5, 6, 7],
+        [7, 8, 9, 10],
+    ) == test_standard
+
+    with pytest.raises(
+        AssertionError,
+        message='Expecting Column lengths to be shorter than first'
+    ):
+        execution._transpose_results(
+            [1, 2, 3],
+            [1, 2]
+        )
+    with pytest.raises(
+        AssertionError,
+        message='Expecting Column to be larger than first column '
+    ):
+        execution._transpose_results(
+            [1, 2],
+            [1, 2, 3]
+        )

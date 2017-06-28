@@ -163,7 +163,7 @@ itempayment,string,True
 costoutlierthreshold,float,True
 itemcostoutlierthreshold,string,True
 itemusedprocedure,string,True
-accessfeeamount,float,True
+accessfeeamount,string,True
 item340bdiscountflag,string,True
 itemdmemodifierpresentflag,string,True
 itempreventiveserviceflag,string,True

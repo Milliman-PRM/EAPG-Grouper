@@ -115,6 +115,8 @@ def get_standard_inputs_from_prm(
     ) -> pyspark.sql.DataFrame:
     """Get the standard EAPG inputs from PRM ~public data sets"""
     LOGGER.info("Creating standard EAPG software inputs from ~public PRM data")
+    outputs = dict()
+
     struct = build_structtype_from_csv(
         path_schema_input
         )
@@ -295,12 +297,14 @@ def get_standard_inputs_from_prm(
             ).alias('ageinyears'),
     )
 
-    df_eapg_input = _coalesce_metadata_and_cast(
+    outputs['claims'] = _coalesce_metadata_and_cast(
         struct,
         df_merge
         )
 
-    return df_eapg_input
+    outputs['base_table'] = input_dataframes['outclaims_prm'].select('sequencenumber')
+
+    return outputs
 
 if __name__ == 'main':
     pass

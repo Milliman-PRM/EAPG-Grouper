@@ -13,7 +13,9 @@ import subprocess
 import shutil
 from pathlib import Path
 from functools import partial
+from collections import OrderedDict
 
+import pyspark.sql.functions as spark_funcs
 import pyspark.sql.types as spark_types # pylint: disable=unused-import
 
 import eapg.shared
@@ -180,6 +182,26 @@ def _generate_final_struct(
         )
     return output_struct
 
+def _transpose_results(
+        *cols: "typing.Iterable[str]"
+    )-> "typing.Iterable[tuple]":
+    """
+        Convert a number of arrays of same length to an array of tuples with
+        the same length
+    """
+
+    assert all([len(col) == len(cols[0]) for col in cols]), "All items should be same length as first"
+    n_lines = len(cols[0])
+
+    output = list()
+    for i in range(n_lines):
+        sub_output = list()
+        for values in cols:
+            sub_output.append(values[i])
+        output.append(tuple(sub_output))
+
+    return output
+
 
 def run_eapg_grouper(
         sparkapp: SparkApp,
@@ -193,6 +215,11 @@ def run_eapg_grouper(
         **kwargs_eapg
     ) -> "typing.Mapping[str, pyspark.sql.DataFrame]":
     """Execute the EAPG software"""
+
+    assert "claims" in input_dataframes, "'claims' must be in input_dataframes"
+    assert "base_table" in input_dataframes, "'base_table' must be in input dataframes"
+
+    outputs = dict()
     path_workspace = _assign_path_workspace(
         path_network_io,
         path_output,
@@ -231,15 +258,73 @@ def run_eapg_grouper(
         )
     sparkapp.save_df(
         df_eapg_output,
-        path_output / 'eapgs_out.parquet',
+        path_output / 'eapgs_claim_level.parquet',
         )
+    outputs['eapgs_claim_level'] = df_eapg_output
+
+    LOGGER.info('Transposing EAPG results out to claim line level')
+    map_columns_to_keep = OrderedDict([
+        ('medicalrecordnumber', 'sequencenumber'),
+        ('itemfinaleapg', 'finaleapg'),
+        ('itemfinaleapgtype', 'finaleapgtype'),
+        ('itemfinaleapgcategory', 'finaleapgcategory'),
+        ])
+
+    # Use a UDF to transpose because the number of lines in each claim is variable
+    transposer = spark_funcs.udf(
+        _transpose_results,
+        returnType=spark_types.ArrayType(
+            spark_types.StructType([
+                spark_types.StructField(
+                    final_name,
+                    spark_types.StringType()
+                    )
+                for final_name in map_columns_to_keep.values()
+                ])
+            )
+        )
+
+    df_eapgs_arrays = df_eapg_output.select(
+        '*',
+        *[
+            spark_funcs.split(spark_funcs.col(column), ';').alias('array_' + column)
+            for column in map_columns_to_keep.keys()
+            ]
+    )
+
+    df_eapgs_transpose = df_eapgs_arrays.select(
+        spark_funcs.explode(
+            transposer(*[
+                spark_funcs.col('array_' + colname)
+                for colname in map_columns_to_keep.keys()
+            ])
+        ).alias('single_row_struct')
+    ).select(
+        [
+            spark_funcs.col('single_row_struct')[final_name].alias(final_name)
+            for final_name in map_columns_to_keep.values()
+            ]
+    )
+
+    LOGGER.info('Joining EAPG results with base table')
+    df_base_w_eapgs = input_dataframes['base_table'].join(
+        df_eapgs_transpose,
+        'sequencenumber',
+        how='left_outer',
+        )
+    df_base_w_eapgs.validate.assert_no_nulls(
+        df_base_w_eapgs.columns,
+        )
+    sparkapp.save_df(
+        df_base_w_eapgs,
+        path_output / 'eapgs_claim_line_level.parquet',
+        )
+    outputs['eapgs_claim_line_level'] = df_base_w_eapgs
 
     if cleanup_claim_copies:
         shutil.rmtree(str(path_workspace))
 
-    return df_eapg_output
-
-
+    return outputs
 
 
 if __name__ == 'main':

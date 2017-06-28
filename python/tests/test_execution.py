@@ -13,6 +13,7 @@ from pathlib import Path
 import filecmp
 
 import pytest
+import pyspark.sql.functions as spark_funcs
 
 import eapg.execution as execution
 import eapg
@@ -192,6 +193,8 @@ def test_run_eapg_grouper(
         tmpdir
     ):
     """ test the running of eapg_grouper"""
+
+
     input_path = PATH_MOCK_DATA / 'execution_eapg_in.csv'
     output_data_path = Path(str(tmpdir))
     input_struct = build_structtype_from_csv(
@@ -200,35 +203,106 @@ def test_run_eapg_grouper(
     output_struct = build_structtype_from_csv(
         eapg.shared.PATH_SCHEMAS /'eapgs_out.csv'
     )
+    output_struct_claim_line = build_structtype_from_csv(
+        eapg.shared.PATH_SCHEMAS /'eapgs_out_claim_line.csv'
+    )
     df_input_data = spark_app.session.read.csv(
         str(input_path),
         schema=input_struct,
         header=True,
         mode="FAILFAST",
     )
-    df_output_data = spark_app.session.read.csv(
+    base_table = df_input_data.select(
+        spark_funcs.explode(
+            spark_funcs.split(
+                spark_funcs.col('medicalrecordnumber'), #pylint: disable=no-member
+                ';'
+                )
+            ).alias('sequencenumber')
+        )
+    input_dataframes = {
+        'claims': df_input_data,
+        'base_table': base_table,
+        }
+    df_output_data_claim = spark_app.session.read.csv(
         str(PATH_MOCK_DATA / 'execution_eapg_out.csv'),
         schema=output_struct,
         header=True,
         mode="FAILFAST",
     )
+    df_output_data_claim_line = spark_app.session.read.csv(
+        str(PATH_MOCK_DATA / 'execution_eapg_out_claim_line.csv'),
+        schema=output_struct_claim_line,
+        header=True,
+        mode="FAILFAST",
+    )
 
+    with pytest.raises(AssertionError, message = "Expecting base_table not to exist in input_df"): #
+        execution.run_eapg_grouper(
+            spark_app,
+            {'claims':df_input_data},
+            output_data_path,
+    )
+    with pytest.raises(AssertionError, message = "Expecting claims to not exist in input_df"):
+        execution.run_eapg_grouper(
+            spark_app,
+            {'base_table':base_table},
+            output_data_path,
+    )
     df_eapg_output = execution.run_eapg_grouper(
         spark_app,
-        {'claims':df_input_data},
+        input_dataframes,
         output_data_path,
     )
-    df_empty = df_eapg_output.subtract(df_output_data)
-    assert df_empty.count() == 0
+    df_wide_misses = df_eapg_output['eapgs_claim_level'].subtract(
+        df_output_data_claim
+        )
+    assert df_wide_misses.count() == 0
+    df_long_misses = df_eapg_output['eapgs_claim_line_level'].subtract(
+        df_output_data_claim_line
+        )
+    assert df_long_misses.count() == 0
 
     path_logs = output_data_path / 'logs'
     path_logs.mkdir(exist_ok=True)
     execution.run_eapg_grouper(
         spark_app,
-        {'claims':df_input_data},
+        input_dataframes,
         output_data_path,
         path_logs_public=path_logs,
     )
 
     assert (path_logs / 'error_log_0.txt').exists()
     assert (path_logs / 'edit_log_0.txt').exists()
+
+def test__transpose_results():
+    """Tests converting number of arrays to array of tuples with same length"""
+
+    test_standard = [
+        (1, 4, 7),
+        (2, 5, 8),
+        (3, 6, 9),
+        (4, 7, 10),
+    ]
+    assert execution._transpose_results(
+        [1, 2, 3, 4],
+        [4, 5, 6, 7],
+        [7, 8, 9, 10],
+    ) == test_standard
+
+    with pytest.raises(
+        AssertionError,
+        message='Expecting Column lengths to be shorter than first'
+    ):
+        execution._transpose_results(
+            [1, 2, 3],
+            [1, 2]
+        )
+    with pytest.raises(
+        AssertionError,
+        message='Expecting Column to be larger than first column '
+    ):
+        execution._transpose_results(
+            [1, 2],
+            [1, 2, 3]
+        )

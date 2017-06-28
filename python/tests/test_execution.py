@@ -343,7 +343,7 @@ def test__join_description_to_output(spark_app):
 
     assert not count #Test and input do not match
 
-    def test__transpose_results():
+def test__transpose_results():
     """Tests converting number of arrays to array of tuples with same length"""
 
     test_standard = [

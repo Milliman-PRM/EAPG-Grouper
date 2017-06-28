@@ -291,7 +291,7 @@ def test__transpose_results():
     ) == test_standard
 
     with pytest.raises(
-        IndexError,
+        AssertionError,
         message='Expecting Column lengths to be shorter than first'
     ):
         execution._transpose_results(
@@ -299,7 +299,7 @@ def test__transpose_results():
             [1, 2]
         )
     with pytest.raises(
-        IndexError,
+        AssertionError,
         message='Expecting Column to be larger than first column '
     ):
         execution._transpose_results(

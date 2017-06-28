@@ -189,14 +189,14 @@ def _transpose_results(
         Convert a number of arrays of same length to an array of tuples with
         the same length
     """
+
+    assert all([len(col) == len(cols[0]) for col in cols]), "All items should be same length as first"
     n_lines = len(cols[0])
 
     output = list()
     for i in range(n_lines):
         sub_output = list()
         for values in cols:
-            if len(values) > n_lines:
-                raise IndexError('No value can be longer than first cols input')
             sub_output.append(values[i])
         output.append(tuple(sub_output))
 

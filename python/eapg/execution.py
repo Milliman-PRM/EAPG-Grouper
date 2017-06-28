@@ -213,6 +213,10 @@ def run_eapg_grouper(
         **kwargs_eapg
     ) -> "typing.Mapping[str, pyspark.sql.DataFrame]":
     """Execute the EAPG software"""
+
+    assert "claims" in input_dataframes, "'claims' must be in input_dataframes"
+    assert "base_table" in input_dataframes, "'base_table' must be in input dataframes"
+
     outputs = dict()
     path_workspace = _assign_path_workspace(
         path_network_io,

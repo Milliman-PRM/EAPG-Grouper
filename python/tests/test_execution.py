@@ -193,6 +193,8 @@ def test_run_eapg_grouper(
         tmpdir
     ):
     """ test the running of eapg_grouper"""
+
+
     input_path = PATH_MOCK_DATA / 'execution_eapg_in.csv'
     output_data_path = Path(str(tmpdir))
     input_struct = build_structtype_from_csv(
@@ -235,6 +237,18 @@ def test_run_eapg_grouper(
         mode="FAILFAST",
     )
 
+    with pytest.raises(AssertionError, message = "Expecting base_table not to exist in input_df"): #
+        execution.run_eapg_grouper(
+            spark_app,
+            {'claims':df_input_data},
+            output_data_path,
+    )
+    with pytest.raises(AssertionError, message = "Expecting claims to not exist in input_df"):
+        execution.run_eapg_grouper(
+            spark_app,
+            {'base_table':base_table},
+            output_data_path,
+    )
     df_eapg_output = execution.run_eapg_grouper(
         spark_app,
         input_dataframes,

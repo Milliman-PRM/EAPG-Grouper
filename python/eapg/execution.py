@@ -279,7 +279,6 @@ def run_eapg_grouper(
             **kwargs_eapg
         )
     )
-    rdd_results.count() # Force a realization
     final_struct = _generate_final_struct(output_struct)
     df_eapg_output = _convert_output_to_df(
         sparkapp,

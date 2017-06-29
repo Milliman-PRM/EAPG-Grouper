@@ -5,3 +5,9 @@ A non-exhaustive list of what has changed in a more readable form than a commit 
 ### v1.0.0
 
   - Initial release of product component
+    - Added `eapg.shared`, which primarily contains tooling for converting PRM-processed datasets into EAPG input format
+    - Added `eapg.execution`, which contains tooling for running the EAPG grouper with various options
+    - Modified default EAPG input templates to match PRM-processed data specifications
+      - Converted to `yyyy-MM-dd` date format
+      - Widened character fields to match widths in PRM datamart specifications
+      - Expanded `medicalrecordnumber` field to 999 items, to contain `sequencenumber` for merging back to the source claims

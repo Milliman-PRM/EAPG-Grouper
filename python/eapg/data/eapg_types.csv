@@ -1,0 +1,14 @@
+finaleapgtype,eapg_type_description
+1,Per Diem
+2,Significant Procedure
+3,Medical Visit
+4,Ancillary
+5,Incidental
+6,Drug
+7,DME
+8,Unassigned
+21,Physical Therapy & Rehab
+22,Mental Health & Counseling
+23,Dental Procedure
+24,Radiologic Procedure
+25,Diagnostic Significant Proc

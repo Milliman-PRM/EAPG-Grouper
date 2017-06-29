@@ -1,0 +1,6 @@
+name,datatype,nullable
+finaleapg,string,FALSE
+eapg_description,string,FALSE
+finaleapgtype,string,FALSE
+finaleapgcategory,string,FALSE
+eapg_service_line,string,FALSE

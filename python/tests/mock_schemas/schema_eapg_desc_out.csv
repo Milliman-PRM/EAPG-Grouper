@@ -1,0 +1,9 @@
+name,datatype,nullable
+finaleapgcategory,string,False
+finaleapgtype,string,False
+final_eapg,string,False
+sequence,integer,False
+eapg_description,string,True
+eapg_service_line,string, True
+eapg_type_description,string,True
+eapg_category_description,string,True

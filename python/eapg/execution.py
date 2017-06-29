@@ -30,6 +30,7 @@ PATH_EAPG_GROUPER = Path(r'C:\Program Files\3mhis\v2017.1.2\cgs\cgs_console.exe'
 PATH_TEMPLATES = eapg.shared.PATH_TEMPLATES
 PATH_INPUT_TEMPLATE = eapg.shared.PATH_INPUT_TEMPLATE
 PATH_OUTPUT_TEMPLATE = eapg.shared.PATH_OUTPUT_TEMPLATE
+N_MAX_ITEMS = 450
 
 # pylint: disable=no-member
 
@@ -192,7 +193,7 @@ def _transpose_results(
 
     assert any((
         all([len(col) == len(cols[0]) for col in cols]), # All items should be same length
-        all([len(col) >= 450 for col in cols]), # Unless they are over the EAPG threshold
+        all([len(col) >= N_MAX_ITEMS for col in cols]), # Unless they are over the EAPG threshold
         )), "Columns do not contain the same length"
     n_lines = len(cols[0])
 

@@ -309,10 +309,9 @@ def get_standard_inputs_from_prm(
 
 def get_descriptions_dfs(
         sparkapp: SparkApp,
-) -> ("pyspark.sql.DataFrames",
-      "pyspark.sql.DataFrames",
-      "pyspark.sql.DataFrames"
-     ):
+) -> "typing.Mapping[str, pyspark.sql.DataFrame]":
+
+
     """ Returns the dataframes for eapgs,eapg types, and eapg categories"""
     path_eapgs = PATH_DESCRIPTIONS / "eapgs.csv"
     path_eapg_types = PATH_DESCRIPTIONS / "eapg_types.csv"
@@ -331,32 +330,22 @@ def get_descriptions_dfs(
     struct_eapg_categories = build_structtype_from_csv(
         path_eapg_categories_struct,
         )
+    df_create_dict = {
+        'df_eapgs': (str(path_eapgs), struct_eapg),
+        'df_eapg_types': (str(path_eapg_types), struct_eapg_types),
+        'df_eapg_categories': (str(path_eapg_categories), struct_eapg_categories),
+    }
 
-    df_eapgs = sparkapp.session.read.csv(
-        str(path_eapgs),
-        schema=struct_eapg,
-        header=True,
-        mode="FAILFAST",
-    )
+    df_output = dict()
+    for df_name, (df_data_path, df_schema_path) in df_create_dict.items():
+        df_output[df_name] = sparkapp.session.read.csv(
+            df_data_path,
+            schema=df_schema_path,
+            header=True,
+            mode="FAILFAST"
+        )
 
-    df_eapgs_types = sparkapp.session.read.csv(
-        str(path_eapg_types),
-        schema=struct_eapg_types,
-        header=True,
-        mode="FAILFAST",
-    )
-
-    df_eapg_categories = sparkapp.session.read.csv(
-        str(path_eapg_categories),
-        schema=struct_eapg_categories,
-        header=True,
-        mode="FAILFAST"
-    )
-
-    return (df_eapgs,
-            df_eapgs_types,
-            df_eapg_categories,
-           )
+    return df_output
 
 if __name__ == 'main':
     pass

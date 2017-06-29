@@ -360,20 +360,20 @@ def _join_description_to_output(
         df_input: "pyspark.sql.DataFrame",
     ) -> "pyspark.sql.DataFrame":
     """ Combines Description Dataframes with input"""
-    df_eapg, df_type, df_category = eapg.shared.get_descriptions_dfs(sparkapp)
+    description_dict = eapg.shared.get_descriptions_dfs(sparkapp)
 
     df_with_eapg = df_input.join(
-        spark_funcs.broadcast(df_eapg),
+        spark_funcs.broadcast(description_dict['df_eapgs']),
         ['finaleapg', 'finaleapgtype', 'finaleapgcategory'],
         'left',
     )
     df_with_eapg_type = df_with_eapg.join(
-        spark_funcs.broadcast(df_type),
+        spark_funcs.broadcast(description_dict['df_eapg_types']),
         ['finaleapgtype'],
         'left',
     )
     df_with_category = df_with_eapg_type.join(
-        spark_funcs.broadcast(df_category),
+        spark_funcs.broadcast(description_dict['df_eapg_categories']),
         ['finaleapgcategory'],
         'left'
     )

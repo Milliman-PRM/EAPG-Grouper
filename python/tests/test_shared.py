@@ -255,9 +255,9 @@ def test_get_description_dfs(spark_app):
     )
 
 
-    tv1, tv2, tv3 = eapg.shared.get_descriptions_dfs(spark_app)
-    tv1_zero = df_eapgs.subtract(tv1).count()
-    tv2_zero = df_eapgs_types.subtract(tv2).count()
-    tv3_zero = df_eapg_categories.subtract(tv3).count()
+    dict_descriptions = eapg.shared.get_descriptions_dfs(spark_app)
+    tv1_zero = df_eapgs.subtract(dict_descriptions['df_eapgs']).count()
+    tv2_zero = df_eapgs_types.subtract(dict_descriptions['df_eapg_types']).count()
+    tv3_zero = df_eapg_categories.subtract(dict_descriptions['df_eapg_categories']).count()
     assert not tv1_zero and not tv2_zero and not tv3_zero
 

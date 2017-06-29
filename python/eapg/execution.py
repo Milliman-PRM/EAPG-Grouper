@@ -377,8 +377,18 @@ def _join_description_to_output(
         ['finaleapgcategory'],
         'left'
     )
+    na_string_fill = 'Claim could not be processed'
+    na_number_fill = '0'
 
-    df_output = df_with_category.fillna('Claim could not be processed')
+    df_output = df_with_category.fillna(
+        {
+            'eapg_description': na_string_fill,
+            'eapg_type_description': na_string_fill,
+            'eapg_category_description': na_string_fill,
+            'eapg_service_line': na_number_fill,
+        }
+    )
+
     return df_output
 
 if __name__ == 'main':

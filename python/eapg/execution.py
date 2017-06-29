@@ -190,14 +190,21 @@ def _transpose_results(
         the same length
     """
 
-    assert all([len(col) == len(cols[0]) for col in cols]), "All items should be same length as first"
+    assert any((
+        all([len(col) == len(cols[0]) for col in cols]), # All items should be same length
+        all([len(col) >= 450 for col in cols]), # Unless they are over the EAPG threshold
+        )), "Columns do not contain the same length"
     n_lines = len(cols[0])
 
     output = list()
     for i in range(n_lines):
         sub_output = list()
         for values in cols:
-            sub_output.append(values[i])
+            try:
+                sub_output.append(values[i])
+            except IndexError:
+                sub_output.append(None)
+
         output.append(tuple(sub_output))
 
     return output

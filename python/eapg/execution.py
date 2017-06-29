@@ -98,7 +98,10 @@ def _run_eapg_subprocess(
         options: dict
     ) -> str:
     """Execute EAPG Grouper Command Line Subprocess"""
-    args = _compose_eapg_subprocess_args(id_partition, options)
+    args = _compose_eapg_subprocess_args(
+        id_partition,
+        options,
+    )
 
     print("Starting subprocess for partition {}".format(id_partition))
 
@@ -107,7 +110,7 @@ def _run_eapg_subprocess(
         stderr=subprocess.STDOUT,
         universal_newlines=True,
         check=True,
-        )
+    )
     print("Finish subprocess for partition {}".format(id_partition))
 
 
@@ -129,7 +132,7 @@ def _run_eapg_grouper_on_partition(# pylint: disable=too-many-locals
     path_eapg_io.mkdir(
         parents=True,
         exist_ok=True,
-        )
+    )
 
     path_input_file = path_eapg_io / 'eapg_in.csv'
     path_output_file = path_workspace / 'eapgs_out_{}.csv'.format(id_partition)
@@ -145,7 +148,10 @@ def _run_eapg_grouper_on_partition(# pylint: disable=too-many-locals
         for claim in iter_claims:
             fh_input.write(claim + "\n")
 
-    _run_eapg_subprocess(id_partition, options)
+    _run_eapg_subprocess(
+        id_partition,
+        options,
+    )
 
     yield path_output_file.name
 
@@ -227,15 +233,15 @@ def run_eapg_grouper(
     )
     path_workspace.mkdir(
         exist_ok=True,
-        )
+    )
     LOGGER.info('Turning Claims Dataframe to RDD')
     rdd_claims = input_dataframes['claims'].rdd.mapPartitions(
         partial(
             encode_rows_to_strings,
             schema=input_dataframes['claims'].schema,
             delimiter_csv=',',
-            )
         )
+    )
     LOGGER.info('Submitting Claims RDD Partitions to eapg grouper.')
     rdd_results = rdd_claims.mapPartitionsWithIndex(
         partial(
@@ -244,8 +250,8 @@ def run_eapg_grouper(
             path_logs_public=path_logs_public,
             cleanup_claim_copies=cleanup_claim_copies,
             **kwargs_eapg
-            )
         )
+    )
     rdd_results.count() # Force a realization
     final_struct = _generate_final_struct(output_struct)
     partitions_output = [
@@ -264,12 +270,14 @@ def run_eapg_grouper(
     outputs['eapgs_claim_level'] = df_eapg_output
 
     LOGGER.info('Transposing EAPG results out to claim line level')
-    map_columns_to_keep = OrderedDict([
-        ('medicalrecordnumber', 'sequencenumber'),
-        ('itemfinaleapg', 'finaleapg'),
-        ('itemfinaleapgtype', 'finaleapgtype'),
-        ('itemfinaleapgcategory', 'finaleapgcategory'),
-        ])
+    map_columns_to_keep = OrderedDict(
+        [
+            ('medicalrecordnumber', 'sequencenumber'),
+            ('itemfinaleapg', 'finaleapg'),
+            ('itemfinaleapgtype', 'finaleapgtype'),
+            ('itemfinaleapgcategory', 'finaleapgcategory'),
+        ]
+    )
 
     # Use a UDF to transpose because the number of lines in each claim is variable
     transposer = spark_funcs.udf(
@@ -340,9 +348,10 @@ def _add_description_to_output(
     ) -> "pyspark.sql.DataFrame":
     """Adds the description of the EAPG code,category, and """
     if description_bool:
-        return _join_description_to_output(sparkapp,
-                                           df_input,
-                                          )
+        return _join_description_to_output(
+            sparkapp,
+            df_input,
+        )
     else:
         return df_input
 

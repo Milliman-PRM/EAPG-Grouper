@@ -35,7 +35,7 @@ except NameError: # pragma: no cover
     _PATH_PARENT = Path(eapg.__file__).parent
 
 PATH_SCHEMAS = _PATH_PARENT / 'schemas'
-PATH_DESCRIPTIONS = _PATH_PARENT / 'data' / 'support_files'
+PATH_DESCRIPTIONS = _PATH_PARENT / 'data'
 
 # pylint: disable=no-member
 

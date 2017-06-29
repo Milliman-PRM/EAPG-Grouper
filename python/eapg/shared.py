@@ -16,13 +16,13 @@ import pyspark.sql
 import pyspark.sql.functions as spark_funcs
 import pyspark.sql.types as spark_types
 from prm.spark.io_txt import build_structtype_from_csv
+from prm.spark.app import SparkApp
 
 LOGGER = logging.getLogger(__name__)
 
 PATH_TEMPLATES = Path(os.environ['eapg_grouper_home']) / 'templates'
 PATH_INPUT_TEMPLATE = PATH_TEMPLATES / 'prm_eapgs_in.2017.1.2.dic'
 PATH_OUTPUT_TEMPLATE = PATH_TEMPLATES / 'prm_eapgs_out.2017.1.2.dic'
-
 
 DAYS_PER_YEAR = 365.25
 N_ICD_COLUMNS = 24
@@ -35,6 +35,7 @@ except NameError: # pragma: no cover
     _PATH_PARENT = Path(eapg.__file__).parent
 
 PATH_SCHEMAS = _PATH_PARENT / 'schemas'
+PATH_DESCRIPTIONS = _PATH_PARENT / 'data'
 
 # pylint: disable=no-member
 
@@ -305,6 +306,40 @@ def get_standard_inputs_from_prm(
     outputs['base_table'] = input_dataframes['outclaims_prm'].select('sequencenumber')
 
     return outputs
+
+def get_descriptions_dfs(
+        sparkapp: SparkApp,
+) -> "typing.Mapping[str, pyspark.sql.DataFrame]":
+
+
+    """ Returns the dataframes for eapgs,eapg types, and eapg categories"""
+    name_table = [
+        'eapgs',
+        'eapg_types',
+        'eapg_categories'
+    ]
+    df_create_dict = {
+        'df_{}'.format(name):(
+            str(PATH_DESCRIPTIONS / '{}.csv'.format(name)),
+            PATH_SCHEMAS / 'schema_{}.csv'.format(name)
+            )
+        for name in name_table
+    }
+
+    df_output = dict()
+
+    for df_name, (df_data_path, df_schema_path) in df_create_dict.items():
+        struct_df = build_structtype_from_csv(
+            df_schema_path
+        )
+        df_output[df_name] = sparkapp.session.read.csv(
+            df_data_path,
+            schema=struct_df,
+            header=True,
+            mode="FAILFAST"
+        )
+
+    return df_output
 
 if __name__ == 'main':
     pass

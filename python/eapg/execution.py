@@ -98,7 +98,10 @@ def _run_eapg_subprocess(
         options: dict
     ) -> str:
     """Execute EAPG Grouper Command Line Subprocess"""
-    args = _compose_eapg_subprocess_args(id_partition, options)
+    args = _compose_eapg_subprocess_args(
+        id_partition,
+        options,
+    )
 
     print("Starting subprocess for partition {}".format(id_partition))
 
@@ -107,7 +110,7 @@ def _run_eapg_subprocess(
         stderr=subprocess.STDOUT,
         universal_newlines=True,
         check=True,
-        )
+    )
     print("Finish subprocess for partition {}".format(id_partition))
 
 
@@ -129,7 +132,7 @@ def _run_eapg_grouper_on_partition(# pylint: disable=too-many-locals
     path_eapg_io.mkdir(
         parents=True,
         exist_ok=True,
-        )
+    )
 
     path_input_file = path_eapg_io / 'eapg_in.csv'
     path_output_file = path_workspace / 'eapgs_out_{}.csv'.format(id_partition)
@@ -145,7 +148,10 @@ def _run_eapg_grouper_on_partition(# pylint: disable=too-many-locals
         for claim in iter_claims:
             fh_input.write(claim + "\n")
 
-    _run_eapg_subprocess(id_partition, options)
+    _run_eapg_subprocess(
+        id_partition,
+        options,
+    )
 
     yield path_output_file.name
 
@@ -212,6 +218,7 @@ def run_eapg_grouper(
         path_logs_public: typing.Optional[Path]=None,
         cleanup_claim_copies: bool=True,
         output_struct: typing.Optional[spark_types.StructType]=None,
+        add_description: bool=True,
         **kwargs_eapg
     ) -> "typing.Mapping[str, pyspark.sql.DataFrame]":
     """Execute the EAPG software"""
@@ -226,15 +233,15 @@ def run_eapg_grouper(
     )
     path_workspace.mkdir(
         exist_ok=True,
-        )
+    )
     LOGGER.info('Turning Claims Dataframe to RDD')
     rdd_claims = input_dataframes['claims'].rdd.mapPartitions(
         partial(
             encode_rows_to_strings,
             schema=input_dataframes['claims'].schema,
             delimiter_csv=',',
-            )
         )
+    )
     LOGGER.info('Submitting Claims RDD Partitions to eapg grouper.')
     rdd_results = rdd_claims.mapPartitionsWithIndex(
         partial(
@@ -243,8 +250,8 @@ def run_eapg_grouper(
             path_logs_public=path_logs_public,
             cleanup_claim_copies=cleanup_claim_copies,
             **kwargs_eapg
-            )
         )
+    )
     rdd_results.count() # Force a realization
     final_struct = _generate_final_struct(output_struct)
     partitions_output = [
@@ -263,12 +270,14 @@ def run_eapg_grouper(
     outputs['eapgs_claim_level'] = df_eapg_output
 
     LOGGER.info('Transposing EAPG results out to claim line level')
-    map_columns_to_keep = OrderedDict([
-        ('medicalrecordnumber', 'sequencenumber'),
-        ('itemfinaleapg', 'finaleapg'),
-        ('itemfinaleapgtype', 'finaleapgtype'),
-        ('itemfinaleapgcategory', 'finaleapgcategory'),
-        ])
+    map_columns_to_keep = OrderedDict(
+        [
+            ('medicalrecordnumber', 'sequencenumber'),
+            ('itemfinaleapg', 'finaleapg'),
+            ('itemfinaleapgtype', 'finaleapgtype'),
+            ('itemfinaleapgcategory', 'finaleapgcategory'),
+        ]
+    )
 
     # Use a UDF to transpose because the number of lines in each claim is variable
     transposer = spark_funcs.udf(
@@ -315,17 +324,72 @@ def run_eapg_grouper(
     df_base_w_eapgs.validate.assert_no_nulls(
         df_base_w_eapgs.columns,
         )
-    sparkapp.save_df(
+
+    df_base = _add_description_to_output(
+        sparkapp,
+        add_description,
         df_base_w_eapgs,
+    )
+    sparkapp.save_df(
+        df_base,
         path_output / 'eapgs_claim_line_level.parquet',
         )
-    outputs['eapgs_claim_line_level'] = df_base_w_eapgs
+    outputs['eapgs_claim_line_level'] = df_base
 
     if cleanup_claim_copies:
         shutil.rmtree(str(path_workspace))
 
     return outputs
 
+def _add_description_to_output(
+        sparkapp: SparkApp,
+        description_bool: bool,
+        df_input: "pyspark.sql.DataFrame",
+    ) -> "pyspark.sql.DataFrame":
+    """Adds the description of the EAPG code,category, and """
+    if description_bool:
+        return _join_description_to_output(
+            sparkapp,
+            df_input,
+        )
+    else:
+        return df_input
+
+def _join_description_to_output(
+        sparkapp: SparkApp,
+        df_input: "pyspark.sql.DataFrame",
+    ) -> "pyspark.sql.DataFrame":
+    """ Combines Description Dataframes with input"""
+    description_dict = eapg.shared.get_descriptions_dfs(sparkapp)
+
+    df_with_eapg = df_input.join(
+        spark_funcs.broadcast(description_dict['df_eapgs']),
+        ['finaleapg', 'finaleapgtype', 'finaleapgcategory'],
+        'left',
+    )
+    df_with_eapg_type = df_with_eapg.join(
+        spark_funcs.broadcast(description_dict['df_eapg_types']),
+        ['finaleapgtype'],
+        'left',
+    )
+    df_with_category = df_with_eapg_type.join(
+        spark_funcs.broadcast(description_dict['df_eapg_categories']),
+        ['finaleapgcategory'],
+        'left'
+    )
+    na_string_fill = 'Claim could not be processed'
+    na_number_fill = '0'
+
+    df_output = df_with_category.fillna(
+        {
+            'eapg_description': na_string_fill,
+            'eapg_type_description': na_string_fill,
+            'eapg_category_description': na_string_fill,
+            'eapg_service_line': na_number_fill,
+        }
+    )
+
+    return df_output
 
 if __name__ == 'main':
     pass

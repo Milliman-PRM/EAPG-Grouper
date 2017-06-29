@@ -19,7 +19,6 @@ import eapg.execution as execution
 import eapg
 from prm.spark.io_txt import build_structtype_from_csv
 
-
 try:
     _PATH_THIS_FILE = Path(__file__).parent
 except NameError:
@@ -253,6 +252,7 @@ def test_run_eapg_grouper(
         spark_app,
         input_dataframes,
         output_data_path,
+        add_description=False,
     )
     df_wide_misses = df_eapg_output['eapgs_claim_level'].subtract(
         df_output_data_claim
@@ -274,6 +274,74 @@ def test_run_eapg_grouper(
 
     assert (path_logs / 'error_log_0.txt').exists()
     assert (path_logs / 'edit_log_0.txt').exists()
+
+def test__add_description_to_output(
+        spark_app,
+    ):
+    """test function that checks description output to test files."""
+    input_path = PATH_MOCK_DATA / 'execution_eapg_out_claim_line.csv'
+    input_struct = build_structtype_from_csv(
+        PATH_MOCK_SCHEMAS / 'execution_eapg_out_claim_line.csv'
+    )
+    df_input_data = spark_app.session.read.csv(
+        str(input_path),
+        schema=input_struct,
+        header=True,
+        mode="FAILFAST",
+    )
+    df_empty_false = df_input_data.subtract(
+        execution._add_description_to_output(
+            spark_app,
+            False,
+            df_input_data,
+        )
+    )
+    assert not df_empty_false.count() #if add_description_bool is False should return the same
+
+    output_path = PATH_MOCK_DATA / 'execution_eapg_out_claim_description.csv'
+    output_struct_path = PATH_MOCK_SCHEMAS / 'schema_eapg_desc_out.csv'
+    output_struct = build_structtype_from_csv(output_struct_path)
+    df_output = spark_app.session.read.csv(
+        str(output_path),
+        schema=output_struct,
+        header=True,
+    )
+    df_true = df_output.subtract(
+        execution._add_description_to_output(
+            spark_app,
+            True,
+            df_input_data,
+        )
+    )
+    assert not df_true.count()
+
+def test__join_description_to_output(spark_app):
+    """ test the joining of the description dfs to an output"""
+    path_test_schema = PATH_MOCK_SCHEMAS / 'schema_eapg_desc_out.csv'
+    test_schema = build_structtype_from_csv(path_test_schema)
+    df_test = spark_app.session.read.csv(
+        str(PATH_MOCK_DATA / 'execution_eapg_out_claim_description.csv'),
+        schema=test_schema,
+        header=True,
+    )
+
+    path_input_schema = PATH_MOCK_SCHEMAS / 'execution_eapg_out_claim_line.csv'
+    input_schema = build_structtype_from_csv(path_input_schema)
+
+    df_input = spark_app.session.read.csv(
+        str(PATH_MOCK_DATA / 'execution_eapg_out_claim_line.csv'),
+        schema=input_schema,
+        header=True,
+    )
+
+    df_output = execution._join_description_to_output(
+        spark_app,
+        df_input,
+    )
+
+    count = df_test.subtract(df_output).count()
+
+    assert not count #Test and input do not match
 
 def test__transpose_results():
     """Tests converting number of arrays to array of tuples with same length"""

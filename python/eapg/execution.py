@@ -318,6 +318,11 @@ def run_eapg_grouper(
         df_eapgs_transpose,
         'sequencenumber',
         how='left_outer',
+        ).fillna(
+            {
+                column: '0'
+                for column in map_columns_to_keep.values()
+                }
         )
     df_base_w_eapgs.validate.assert_no_nulls(
         df_base_w_eapgs.columns,

@@ -313,34 +313,28 @@ def get_descriptions_dfs(
 
 
     """ Returns the dataframes for eapgs,eapg types, and eapg categories"""
-    path_eapgs = PATH_DESCRIPTIONS / "eapgs.csv"
-    path_eapg_types = PATH_DESCRIPTIONS / "eapg_types.csv"
-    path_eapg_categories = PATH_DESCRIPTIONS / "eapg_categories.csv"
-
-    path_eapg_struct = PATH_SCHEMAS / "schema_eapgs.csv"
-    path_eapg_types_struct = PATH_SCHEMAS / "schema_eapg_types.csv"
-    path_eapg_categories_struct = PATH_SCHEMAS / "schema_eapg_categories.csv"
-
-    struct_eapg = build_structtype_from_csv(
-        path_eapg_struct,
-        )
-    struct_eapg_types = build_structtype_from_csv(
-        path_eapg_types_struct,
-        )
-    struct_eapg_categories = build_structtype_from_csv(
-        path_eapg_categories_struct,
-        )
+    name_table = [
+        'eapgs',
+        'eapg_types',
+        'eapg_categories'
+    ]
     df_create_dict = {
-        'df_eapgs': (str(path_eapgs), struct_eapg),
-        'df_eapg_types': (str(path_eapg_types), struct_eapg_types),
-        'df_eapg_categories': (str(path_eapg_categories), struct_eapg_categories),
+        'df_{}'.format(name):(
+            str(PATH_DESCRIPTIONS / '{}.csv'.format(name)),
+            PATH_SCHEMAS / 'schema_{}.csv'.format(name)
+            )
+        for name in name_table
     }
 
     df_output = dict()
+
     for df_name, (df_data_path, df_schema_path) in df_create_dict.items():
+        struct_df = build_structtype_from_csv(
+            df_schema_path
+        )
         df_output[df_name] = sparkapp.session.read.csv(
             df_data_path,
-            schema=df_schema_path,
+            schema=struct_df,
             header=True,
             mode="FAILFAST"
         )

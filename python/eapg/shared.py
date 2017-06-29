@@ -139,6 +139,9 @@ def get_standard_inputs_from_prm(
         spark_funcs.abs(
             spark_funcs.col('paid')
             ).alias('abs_paid'), # For some reason, paid can't be negative
+        spark_funcs.abs(
+            spark_funcs.col('units')
+            ).alias('abs_units'), # Units can't be negative ("-" is not a number)
         spark_funcs.lit(0).alias('actionflag'),
         spark_funcs.when(
             spark_funcs.col('prm_line').startswith('P'),
@@ -170,7 +173,7 @@ def get_standard_inputs_from_prm(
                 'modifier',
                 'modifier2',
                 'revcode',
-                'units',
+                'abs_units',
                 'abs_paid',
                 'fromdate',
                 'actionflag',
@@ -239,7 +242,7 @@ def get_standard_inputs_from_prm(
         spark_funcs.lit(None).alias('itemmodifier4'),
         spark_funcs.lit(None).alias('itemmodifier5'),
         spark_funcs.col('revcode_concat').alias('itemrevenuecode'),
-        spark_funcs.col('units_concat').alias('itemunitsofservice'),
+        spark_funcs.col('abs_units_concat').alias('itemunitsofservice'),
         spark_funcs.col('abs_paid_concat').alias('itemcharges'),
         spark_funcs.col('fromdate_concat').alias('itemservicedate'),
         spark_funcs.col('actionflag_concat').alias('itemactionflag'),

@@ -140,6 +140,9 @@ def get_standard_inputs_from_prm(
         spark_funcs.abs(
             spark_funcs.col('paid')
             ).alias('abs_paid'), # For some reason, paid can't be negative
+        spark_funcs.abs(
+            spark_funcs.col('units')
+            ).alias('abs_units'), # Units can't be negative ("-" is not a number)
         spark_funcs.lit(0).alias('actionflag'),
         spark_funcs.when(
             spark_funcs.col('prm_line').startswith('P'),
@@ -147,6 +150,10 @@ def get_standard_inputs_from_prm(
             ).otherwise(0).alias('professionalserviceflag'),
         (spark_funcs.col('allowed') - spark_funcs.col('paid')).alias('noncoveredcharges'),
         spark_funcs.lit(None).alias('ndccode'),
+        spark_funcs.coalesce(
+            spark_funcs.col('hcpcs'),
+            spark_funcs.lit('XX'),
+            ).alias('hcpcs_xx'),
     ).groupBy(
         'member_id',
         'claimid',
@@ -163,11 +170,11 @@ def get_standard_inputs_from_prm(
                 ).alias('{}_concat'.format(col))
             for col in {
                 'sequencenumber',
-                'hcpcs',
+                'hcpcs_xx',
                 'modifier',
                 'modifier2',
                 'revcode',
-                'units',
+                'abs_units',
                 'abs_paid',
                 'fromdate',
                 'actionflag',
@@ -179,8 +186,8 @@ def get_standard_inputs_from_prm(
                 }
             ],
         spark_funcs.first('providerid').alias('nationalprovideridentifier'),
-        spark_funcs.first('prm_fromdate_claim').alias('admitdate'),
-        spark_funcs.first('prm_todate_claim').alias('dischargedate'),
+        spark_funcs.min('prm_fromdate_claim').alias('admitdate'),
+        spark_funcs.max('prm_todate_claim').alias('dischargedate'),
         spark_funcs.first('billtype').alias('typeofbill'),
         spark_funcs.first('dischargestatus').alias('dischargestatus'),
         spark_funcs.sum('mr_paid').alias('totalcharges'),
@@ -229,14 +236,14 @@ def get_standard_inputs_from_prm(
             *grouped_diag_cols[1:],
             ).alias('secondarydiagnosis'),
         spark_funcs.lit(None).alias('reasonforvisitdiagnosis'),
-        spark_funcs.col('hcpcs_concat').alias('procedurehcpcs'),
+        spark_funcs.col('hcpcs_xx_concat').alias('procedurehcpcs'),
         spark_funcs.col('modifier_concat').alias('itemmodifier1'),
         spark_funcs.col('modifier2_concat').alias('itemmodifier2'),
         spark_funcs.lit(None).alias('itemmodifier3'),
         spark_funcs.lit(None).alias('itemmodifier4'),
         spark_funcs.lit(None).alias('itemmodifier5'),
         spark_funcs.col('revcode_concat').alias('itemrevenuecode'),
-        spark_funcs.col('units_concat').alias('itemunitsofservice'),
+        spark_funcs.col('abs_units_concat').alias('itemunitsofservice'),
         spark_funcs.col('abs_paid_concat').alias('itemcharges'),
         spark_funcs.col('fromdate_concat').alias('itemservicedate'),
         spark_funcs.col('actionflag_concat').alias('itemactionflag'),

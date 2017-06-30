@@ -236,18 +236,24 @@ def test_run_eapg_grouper(
         mode="FAILFAST",
     )
 
-    with pytest.raises(AssertionError, message = "Expecting base_table not to exist in input_df"): #
+    with pytest.raises(
+        AssertionError,
+        message="Expecting base_table not to exist in input_df"
+    ):
         execution.run_eapg_grouper(
             spark_app,
             {'claims':df_input_data},
             output_data_path,
-    )
-    with pytest.raises(AssertionError, message = "Expecting claims to not exist in input_df"):
+        )
+    with pytest.raises(
+        AssertionError,
+        message="Expecting claims to not exist in input_df"
+    ):
         execution.run_eapg_grouper(
             spark_app,
             {'base_table':base_table},
             output_data_path,
-    )
+        )
     df_eapg_output = execution.run_eapg_grouper(
         spark_app,
         input_dataframes,
@@ -315,7 +321,7 @@ def test__add_description_to_output(
     )
     assert not df_true.count()
 
-def test__join_description_to_output(spark_app):
+def test__join_description_to_output(spark_app):#pylint: disable=invalid-name
     """ test the joining of the description dfs to an output"""
     path_test_schema = PATH_MOCK_SCHEMAS / 'schema_eapg_desc_out.csv'
     test_schema = build_structtype_from_csv(path_test_schema)
@@ -366,6 +372,12 @@ def test__transpose_results():
             [1, 2, 3],
             [1, 2]
         )
+    with pytest.raises(
+        IndexError,
+        message='Expecting Empty input'
+    ):
+        execution._transpose_results()
+
     with pytest.raises(
         AssertionError,
         message='Expecting Column to be larger than first column '

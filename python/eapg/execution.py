@@ -30,6 +30,7 @@ PATH_EAPG_GROUPER = Path(r'C:\Program Files\3mhis\v2017.1.2\cgs\cgs_console.exe'
 PATH_TEMPLATES = eapg.shared.PATH_TEMPLATES
 PATH_INPUT_TEMPLATE = eapg.shared.PATH_INPUT_TEMPLATE
 PATH_OUTPUT_TEMPLATE = eapg.shared.PATH_OUTPUT_TEMPLATE
+N_MAX_ITEMS = 450
 
 # pylint: disable=no-member
 
@@ -196,14 +197,21 @@ def _transpose_results(
         the same length
     """
 
-    assert all([len(col) == len(cols[0]) for col in cols]), "All items should be same length as first"
+    assert any((
+        all([len(col) == len(cols[0]) for col in cols]), # All items should be same length
+        all([len(col) >= N_MAX_ITEMS for col in cols]), # Unless they are over the EAPG threshold
+        )), "Columns do not contain the same length"
     n_lines = len(cols[0])
 
     output = list()
     for i in range(n_lines):
         sub_output = list()
         for values in cols:
-            sub_output.append(values[i])
+            try:
+                sub_output.append(values[i])
+            except IndexError:
+                sub_output.append(None)
+
         output.append(tuple(sub_output))
 
     return output
@@ -320,6 +328,11 @@ def run_eapg_grouper(
         df_eapgs_transpose,
         'sequencenumber',
         how='left_outer',
+        ).fillna(
+            {
+                column: '0'
+                for column in map_columns_to_keep.values()
+                }
         )
     df_base_w_eapgs.validate.assert_no_nulls(
         df_base_w_eapgs.columns,

@@ -19,7 +19,7 @@ import pyspark.sql.functions as spark_funcs
 import pyspark.sql.types as spark_types # pylint: disable=unused-import
 
 import eapg.shared
-from prm.spark.io_txt import encode_rows_to_strings, build_structtype_from_csv
+from prm.spark.io_txt import encode_rows_to_strings, build_structtype_from_csv, import_csv
 from prm.spark.app import SparkApp
 
 LOGGER = logging.getLogger(__name__)
@@ -136,7 +136,7 @@ def _run_eapg_grouper_on_partition(# pylint: disable=too-many-locals
     )
 
     path_input_file = path_eapg_io / 'eapg_in.csv'
-    path_output_file = path_workspace / 'eapgs_out_{}.csv'.format(id_partition)
+    path_output_file = path_eapg_io / 'eapgs_out.csv'
 
     options = _compose_cli_parameters(
         id_partition,
@@ -154,7 +154,9 @@ def _run_eapg_grouper_on_partition(# pylint: disable=too-many-locals
         options,
     )
 
-    yield path_output_file.name
+    with path_output_file.open('r') as result:
+        for line in result:
+            yield line
 
     if cleanup_claim_copies:
         shutil.rmtree(str(path_eapg_io)) # Cleanup extra claim copies lying around
@@ -216,6 +218,23 @@ def _transpose_results(
 
     return output
 
+def _convert_output_to_df(
+        sparkapp: SparkApp,
+        rdd: "pyspark.RDD",
+        structtype: spark_types.StructType,
+    ) -> "pyspark.sql.DataFrame":
+    """Take the output stream and convert to dataframe"""
+    LOGGER.debug("Sourcing from RDD %r", rdd)
+    df_result = import_csv(
+        sparkapp,
+        rdd,
+        structtype,
+        header=False,
+        delimiter=',',
+        default_null_literals="",
+        )
+    return df_result
+
 
 def run_eapg_grouper(
         sparkapp: SparkApp,
@@ -260,16 +279,11 @@ def run_eapg_grouper(
             **kwargs_eapg
         )
     )
-    rdd_results.count() # Force a realization
     final_struct = _generate_final_struct(output_struct)
-    partitions_output = [
-        str(_path)
-        for _path in path_workspace.glob('eapgs_out_*.csv')
-        ]
-    df_eapg_output = sparkapp.session.read.csv(
-        partitions_output,
-        schema=final_struct,
-        header=False,
+    df_eapg_output = _convert_output_to_df(
+        sparkapp,
+        rdd_results,
+        final_struct,
         )
     sparkapp.save_df(
         df_eapg_output,

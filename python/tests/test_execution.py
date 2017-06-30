@@ -367,6 +367,12 @@ def test__transpose_results():
             [1, 2]
         )
     with pytest.raises(
+            IndexError,
+            message='Expecting Empty input '
+    ):
+        execution._transpose_results()
+
+    with pytest.raises(
         AssertionError,
         message='Expecting Column to be larger than first column '
     ):

@@ -374,3 +374,9 @@ def test__transpose_results():
             [1, 2],
             [1, 2, 3]
         )
+    test_too_larger = [(1, 1)]*450 + [(1, None)]
+
+    assert test_too_larger == execution._transpose_results(
+        [1]*451,
+        [1]*450,
+    ) #if given greater than max eapg output then any extra should be None

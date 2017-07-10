@@ -254,6 +254,32 @@ def test_run_eapg_grouper(
             {'base_table':base_table},
             output_data_path,
         )
+    with pytest.raises(
+        AssertionError,
+        message="Expecting 'upload_template not to exist in kwargs_eapg"
+    ):
+        execution.run_eapg_grouper(
+            spark_app,
+            {
+                'claims':df_input_data,
+                'base_table': base_table,
+            },
+            output_data_path,
+            output_struct=output_struct,
+        )
+    with pytest.raises(
+        AssertionError,
+        message="expecting 'output_struct' not to exists, when 'upload_template' does",
+    ):
+        execution.run_eapg_grouper(
+            spark_app,
+            {
+                'claims': df_input_data,
+                'base_table': base_table,
+            },
+            output_data_path,
+            upload_template=eapg.shared.PATH_SCHEMAS / 'eapgs_out.csv',
+        )
     df_eapg_output = execution.run_eapg_grouper(
         spark_app,
         input_dataframes,
@@ -280,6 +306,7 @@ def test_run_eapg_grouper(
 
     assert (path_logs / 'error_log_0.txt').exists()
     assert (path_logs / 'edit_log_0.txt').exists()
+
 
 def test__add_description_to_output(
         spark_app,

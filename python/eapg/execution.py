@@ -252,6 +252,11 @@ def run_eapg_grouper(
 
     assert "claims" in input_dataframes, "'claims' must be in input_dataframes"
     assert "base_table" in input_dataframes, "'base_table' must be in input dataframes"
+    if output_struct:
+        assert 'upload_template' in kwargs_eapg, \
+        "upload_template and output_struct must both be defined"
+    if 'upload_template' in kwargs_eapg:
+        assert output_struct, "upload_template and output_struct must both be defined"
 
     outputs = dict()
     path_workspace = _assign_path_workspace(

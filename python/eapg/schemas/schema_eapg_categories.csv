@@ -1,0 +1,3 @@
+name,datatype,nullable
+finaleapgcategory,string,FALSE
+eapg_category_description,string,FALSE

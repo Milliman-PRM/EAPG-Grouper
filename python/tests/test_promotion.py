@@ -18,8 +18,3 @@ def test_import(): # pylint: disable=wrong-import-position
     import eapg.promotion
 
     assert 'eapg.promotion' in sys.modules
-
-
-
-
-

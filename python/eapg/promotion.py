@@ -25,7 +25,7 @@ PATH_PROMOTION = Path(r'S:\PRM\Pipeline_Components\EAPG_Grouper')
 
 
 
-def main() -> int:
+def main() -> int: #pragma: no cover
     """Promotion process for EAPG-Grouper"""
     LOGGER.info('Beginning code promotion for product component')
     github_repo = repo.GithubRepository.from_parts('PRM', 'EAPG-Grouper')

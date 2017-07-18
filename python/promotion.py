@@ -16,7 +16,7 @@ from indypy.nonstandard import promotion_tools
 LOGGER = logging.getLogger(__name__)
 
 PATH_RELEASE_NOTES = Path(
-    os.environ["EAPG_GROUPER_HOME"]) / 'docs' / 'release_notes.md'
+    os.environ["EAPG_GROUPER_HOME"]) / 'docs' / 'release-notes.md'
 
 PATH_PROMOTION = Path(r'S:\PRM\Pipeline_Components\EAPG_Grouper')
 
@@ -40,7 +40,7 @@ def main() -> int:
     release.make_release_json()
     tag = release.make_tag(repository_clone)
     release.post_github_release(
-        conf.get_github_oath(prompt_if_no_file=True),
+        conf.get_github_oauth(prompt_if_no_file=True),
         tag,
         body=promotion_tools.get_release_notes(PATH_RELEASE_NOTES, version),
     )

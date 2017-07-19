@@ -1,8 +1,11 @@
 """
-### CODE OWNERS:Chas Busenburg
+### CODE OWNERS: Chas Busenburg, Kyle Baird
+
 ### OBJECTIVE:
     Automate promotion for EAPG Grouper
+
 ### DEVELOPER NOTES:
+    <none>
 """
 import logging
 import os
@@ -24,8 +27,7 @@ PATH_PROMOTION = Path(r'S:\PRM\Pipeline_Components\EAPG_Grouper')
 # =============================================================================
 
 
-
-def main() -> int: #pragma: no cover
+def main() -> int:  # pragma: no cover
     """Promotion process for EAPG-Grouper"""
     LOGGER.info('Beginning code promotion for product component')
     github_repo = repo.GithubRepository.from_parts('PRM', 'EAPG-Grouper')
@@ -43,9 +45,6 @@ def main() -> int: #pragma: no cover
         tag,
         body=promotion_tools.get_release_notes(PATH_RELEASE_NOTES, version),
     )
-
-
-
     return 0
 
 

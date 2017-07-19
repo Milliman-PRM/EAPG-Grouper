@@ -49,7 +49,7 @@ def main() -> int:  # pragma: no cover
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     # pylint: disable=wrong-import-position, wrong-import-order, ungrouped-imports
     import sys
     import prm.utils.logging_ext

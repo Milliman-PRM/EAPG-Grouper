@@ -1,5 +1,5 @@
 @echo off
-rem ### CODE OWNERS: Chas Busenburg
+rem ### CODE OWNERS: Chas Busenburg, Kyle Baird
 rem 
 rem ### OBJECTIVE:
 rem   Run the promotion process to promote a new version of this component

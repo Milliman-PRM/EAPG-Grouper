@@ -11,7 +11,7 @@ rem  *none*
 rem LIBRARIES, LOCATIONS, LITERALS, ETC. GO ABOVE HERE
 
 echo %~nx0 %DATE:~-4%-%DATE:~4,2%-%DATE:~7,2% %TIME%: Setting up promotion environment for product component
-call %~dp0setup_env.bat
+call "%~dp0setup_env.bat"
 echo Finished setting up promotion environment for product component
 
 echo %~nx0 %DATE:~-4%-%DATE:~4,2%-%DATE:~7,2% %TIME%: Calling promotion script

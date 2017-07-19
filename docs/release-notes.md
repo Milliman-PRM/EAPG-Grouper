@@ -2,6 +2,9 @@
 
 A non-exhaustive list of what has changed in a more readable form than a commit history.
 
+### v?.?.?
+  - Addition of automated promotion processes with `promote_release.bat` and `promotion.py`.
+
 ### v1.0.0
 
   - Initial release of product component

@@ -32,7 +32,8 @@ def main() -> int:  # pragma: no cover
     LOGGER.info('Beginning code promotion for product component')
     github_repo = repo.GithubRepository.from_parts('PRM', 'EAPG-Grouper')
     version = PipelineVersion(
-        input("Please enter the version number for this release (e.g. 1.2.3): ")
+        input("Please enter the version number for this release (e.g. 1.2.3): "),
+        partial=True,
     )
 
     doc_info = promotion_tools.get_documentation_inputs(github_repo)

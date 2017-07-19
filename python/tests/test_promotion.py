@@ -1,20 +1,15 @@
 """
-### CODE OWNERS: Chas Busenburg
+### CODE OWNERS: Chas Busenburg, Kyle Baird
+
 ### OBJECTIVE:
     Test promotion.py
-### DEVELOPER NOTES:
-"""
-import logging
-import sys
 
-LOGGER = logging.getLogger(__name__)
+### DEVELOPER NOTES:
+    Currently, just a stub test program because of minimal logic contained in module
+"""
+# pylint: disable=unused-import
+import eapg.promotion
 
 # =============================================================================
 # LIBRARIES, LOCATIONS, LITERALS, ETC. GO ABOVE HERE
 # =============================================================================
-
-def test_import(): # pylint: disable=wrong-import-position
-    """ test that eapg.promotion imports properly"""
-    import eapg.promotion
-
-    assert 'eapg.promotion' in sys.modules

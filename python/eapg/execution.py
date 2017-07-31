@@ -246,6 +246,7 @@ def run_eapg_grouper(
         cleanup_claim_copies: bool=True,
         output_struct: typing.Optional[spark_types.StructType]=None,
         add_description: bool=True,
+        description_dfs: typing.Optional["typing.Mapping[str, pyspark.sql.DataFrame]"]=None,
         **kwargs_eapg
     ) -> "typing.Mapping[str, pyspark.sql.DataFrame]":
     """Execute the EAPG software"""
@@ -361,6 +362,7 @@ def run_eapg_grouper(
         sparkapp,
         add_description,
         df_base_w_eapgs,
+        description_dfs,
     )
     sparkapp.save_df(
         df_base,
@@ -377,12 +379,14 @@ def _add_description_to_output(
         sparkapp: SparkApp,
         description_bool: bool,
         df_input: "pyspark.sql.DataFrame",
+        description_dfs: typing.Optional["typing.Mapping[str, pyspark.sql.DataFrame]"]=None,
     ) -> "pyspark.sql.DataFrame":
     """Adds the description of the EAPG code,category, and """
     if description_bool:
         return _join_description_to_output(
             sparkapp,
             df_input,
+            description_dfs,
         )
     else:
         return df_input
@@ -390,9 +394,12 @@ def _add_description_to_output(
 def _join_description_to_output(
         sparkapp: SparkApp,
         df_input: "pyspark.sql.DataFrame",
+        description_dfs: typing.Optional["typing.Mapping[str, pyspark.sql.DataFrame]"]=None,
     ) -> "pyspark.sql.DataFrame":
     """ Combines Description Dataframes with input"""
     description_dict = eapg.shared.get_descriptions_dfs(sparkapp)
+    if description_dfs:
+        description_dict.update(description_dfs)
 
     df_with_eapg = df_input.join(
         spark_funcs.broadcast(description_dict['df_eapgs']),

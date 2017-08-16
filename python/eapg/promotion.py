@@ -14,7 +14,6 @@ from pathlib import Path
 
 from indypy.nonstandard.ghapi_tools import repo, conf
 from indypy.nonstandard import promotion_tools
-from prm.promotion import PipelineVersion
 LOGGER = logging.getLogger(__name__)
 
 PATH_RELEASE_NOTES = Path(
@@ -31,7 +30,7 @@ def main() -> int:  # pragma: no cover
     """Promotion process for EAPG-Grouper"""
     LOGGER.info('Beginning code promotion for product component')
     github_repo = repo.GithubRepository.from_parts('PRM', 'EAPG-Grouper')
-    version = PipelineVersion(
+    version = promotion_tools.LocalVersion(
         input("Please enter the version number for this release (e.g. 1.2.3): "),
         partial=True,
     )

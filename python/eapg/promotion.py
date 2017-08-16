@@ -35,17 +35,22 @@ def main() -> int:  # pragma: no cover
         input("Please enter the version number for this release (e.g. 1.2.3): "),
         partial=True,
     )
-
+    promotion_branch = input("Please select the branch to promote (default: master): ")
+    if not promotion_branch:
+        promotion_branch = "master"
+    assert promotion_branch == "master" or version.prerelease,\
+        "Releases can only be promoted from master. Pre-releases can be promoted from any branch"
     doc_info = promotion_tools.get_documentation_inputs(github_repo)
     release = promotion_tools.Release(github_repo, version, PATH_PROMOTION, doc_info)
-    repository_clone = release.export_repo()
+    repository_clone = release.export_repo(branch=promotion_branch)
     release.make_release_json()
-    tag = release.make_tag(repository_clone)
-    release.post_github_release(
-        conf.get_github_oauth(prompt_if_no_file=True),
-        tag,
-        body=promotion_tools.get_release_notes(PATH_RELEASE_NOTES, version),
-    )
+    if not version.prerelease:
+        tag = release.make_tag(repository_clone)
+        release.post_github_release(
+            conf.get_github_oauth(prompt_if_no_file=True),
+            tag,
+            body=promotion_tools.get_release_notes(PATH_RELEASE_NOTES, version),
+        )
     return 0
 
 

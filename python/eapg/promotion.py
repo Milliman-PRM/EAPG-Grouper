@@ -31,7 +31,7 @@ def main() -> int:  # pragma: no cover
     LOGGER.info('Beginning code promotion for product component')
     github_repo = repo.GithubRepository.from_parts('PRM', 'EAPG-Grouper')
     version = promotion_tools.LocalVersion(
-        input("Please enter the version number for this release (e.g. 1.2.3): "),
+        input("Please enter the version number for this release (e.g. v1.2.3): "),
         partial=True,
     )
     promotion_branch = input("Please select the branch to promote (default: master): ")

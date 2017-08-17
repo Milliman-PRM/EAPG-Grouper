@@ -145,7 +145,7 @@ def _run_eapg_grouper_on_partition(# pylint: disable=too-many-locals
         path_logs_public,
         **kwargs_eapg
     )
-    with path_input_file.open('w') as fh_input:
+    with path_input_file.open('w', errors='replace') as fh_input:
         for claim in iter_claims:
             fh_input.write(claim + "\n")
 

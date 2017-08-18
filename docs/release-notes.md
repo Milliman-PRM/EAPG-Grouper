@@ -5,6 +5,10 @@ A non-exhaustive list of what has changed in a more readable form than a commit 
 ### v?.?.?
   - Addition of automated promotion processes with `promote_release.bat` and `promotion.py`.
 
+### v1.0.1
+
+  - Replace encoding errors with `?` when writing to text for application processing.
+
 ### v1.0.0
 
   - Initial release of product component

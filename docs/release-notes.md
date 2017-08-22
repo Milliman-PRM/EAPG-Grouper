@@ -1,6 +1,7 @@
 ## Release Notes
 
 A non-exhaustive list of what has changed in a more readable form than a commit history.
+
 ### v1.0.2
   
   - In eapgs_out.csv , schema type for `claimedits` changed from `integer` to `string` to accommodate `claimedits` possible length of twenty characters.

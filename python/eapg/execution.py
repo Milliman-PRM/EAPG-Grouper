@@ -39,25 +39,25 @@ N_MAX_ITEMS = 450
 # =============================================================================
 
 
-def _get_public_log_parameters(
+def _get_error_log_parameters(
         id_partition: int,
-        path_logs_public: typing.Optional[Path]
+        path_logs_error: typing.Optional[Path]
     ) -> dict:
-    """ check if path_logs_public exists, """
-    print("Checking Public_Log_Path_{}".format(id_partition))
-    if path_logs_public:
-        public_options = {
-            'error_log': path_logs_public / 'error_log_{}.txt'.format(id_partition),
+    """ check if path_logs_error exists, """
+    print("Checking Error_Log_Path_{}".format(id_partition))
+    if path_logs_error:
+        error_options = {
+            'error_log': path_logs_error / 'error_log_{}.txt'.format(id_partition),
         }
     else:
-        public_options = dict()
-    return public_options
+        error_options = dict()
+    return error_options
 
 def _compose_cli_parameters(
         id_partition: int,
         path_input_file: Path,
         path_output_file: Path,
-        path_logs_public: typing.Optional[Path],
+        path_logs_error: typing.Optional[Path],
         **kwargs_eapg
     ) -> dict:
     print("Composing options dictionary for partition_{}".format(id_partition))
@@ -72,11 +72,11 @@ def _compose_cli_parameters(
         'grouper': EAPG_VERSION,
         'input_date_format': 'yyyy-MM-dd',
         }
-    pub_log_parameters = _get_public_log_parameters(
+    error_log_parameters = _get_error_log_parameters(
         id_partition,
-        path_logs_public
+        path_logs_error
     )
-    cli_parameters = {**pub_log_parameters, **initial_parameters}
+    cli_parameters = {**error_log_parameters, **initial_parameters}
     cli_parameters.update(**kwargs_eapg)
 
     return cli_parameters
@@ -121,7 +121,7 @@ def _run_eapg_grouper_on_partition(# pylint: disable=too-many-locals
         iter_claims: "typing.Iterable[str]",
         *,
         path_workspace: Path,
-        path_logs_public: typing.Optional[Path]=None,
+        path_logs_error: typing.Optional[Path]=None,
         cleanup_claim_copies: bool=True,
         **kwargs_eapg
     ) -> None:  # pragma: no cover
@@ -141,7 +141,7 @@ def _run_eapg_grouper_on_partition(# pylint: disable=too-many-locals
         id_partition,
         path_input_file,
         path_output_file,
-        path_logs_public,
+        path_logs_error,
         **kwargs_eapg
     )
     with path_input_file.open('w', errors='replace') as fh_input:
@@ -241,7 +241,7 @@ def run_eapg_grouper(
         path_output: Path,
         *,
         path_network_io: typing.Optional[Path]=None,
-        path_logs_public: typing.Optional[Path]=None,
+        path_logs_error: typing.Optional[Path]=None,
         cleanup_claim_copies: bool=True,
         output_struct: typing.Optional[spark_types.StructType]=None,
         add_description: bool=True,
@@ -278,7 +278,7 @@ def run_eapg_grouper(
         partial(
             _run_eapg_grouper_on_partition,
             path_workspace=path_workspace,
-            path_logs_public=path_logs_public,
+            path_logs_error=path_logs_error,
             cleanup_claim_copies=cleanup_claim_copies,
             **kwargs_eapg
         )

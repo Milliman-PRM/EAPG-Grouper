@@ -48,7 +48,6 @@ def _get_public_log_parameters(
     if path_logs_public:
         public_options = {
             'error_log': path_logs_public / 'error_log_{}.txt'.format(id_partition),
-            'edit_log': path_logs_public / 'edit_log_{}.txt'.format(id_partition),
         }
     else:
         public_options = dict()

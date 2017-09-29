@@ -56,7 +56,6 @@ def test__public_log_parameters(tmpdir):
 
     expected_true_dict = {
         'error_log': true_test_path / 'error_log_{}.txt'.format(id_partition),
-        'edit_log': true_test_path / 'edit_log_{}.txt'.format(id_partition)
     }
 
     expected_false_dict = dict()

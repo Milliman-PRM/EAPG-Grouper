@@ -4,6 +4,8 @@ A non-exhaustive list of what has changed in a more readable form than a commit 
 
 ### v?.?.?
   - Addition of automated promotion processes with `promote_release.bat` and `promotion.py`.
+  - `path_logs_public` has been changed to `path_logs_error`
+    - `edit_logs` has been removed as part of logging, if needed pass as a kwarg argument.
 
 ### v1.0.2
   

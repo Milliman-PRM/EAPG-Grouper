@@ -47,24 +47,22 @@ def mock_schemas():
         }
 
 
-
-def test__public_log_parameters(tmpdir):
-    """test that public_log_check tests correctly"""
+def test__error_log_parameters(tmpdir):
+    """test that error_log_check tests correctly"""
     id_partition = 3
     true_test_path = Path(str(tmpdir))
     false_test_path = None
 
     expected_true_dict = {
         'error_log': true_test_path / 'error_log_{}.txt'.format(id_partition),
-        'edit_log': true_test_path / 'edit_log_{}.txt'.format(id_partition)
     }
 
     expected_false_dict = dict()
-    result_true_dict = execution._get_public_log_parameters(
+    result_true_dict = execution._get_error_log_parameters(
         id_partition,
         true_test_path,
     )
-    result_false_dict = execution._get_public_log_parameters(
+    result_false_dict = execution._get_error_log_parameters(
         id_partition,
         false_test_path,
     )
@@ -79,7 +77,7 @@ def test__compose_cli_parameters(tmpdir):
     path_input_template = execution.PATH_INPUT_TEMPLATE
     path_output_template = execution.PATH_OUTPUT_TEMPLATE
     eapg_version = execution.EAPG_VERSION
-    path_logs_public = None
+    path_logs_error = None
 
     output_sans_kwargs = {
         'input': path_input_file.as_posix(),
@@ -99,13 +97,13 @@ def test__compose_cli_parameters(tmpdir):
         id_partition,
         path_input_file,
         path_output_file,
-        path_logs_public,
+        path_logs_error,
     )
     assert output_kwargs == execution._compose_cli_parameters(
         id_partition,
         path_input_file,
         path_output_file,
-        path_logs_public,
+        path_logs_error,
         test=True,
     )
 def test__compose_eapg_subprocess_args(): # pylint: disable=invalid-name
@@ -192,7 +190,6 @@ def test_run_eapg_grouper(
         tmpdir
     ):
     """ test the running of eapg_grouper"""
-
 
     input_path = PATH_MOCK_DATA / 'execution_eapg_in.csv'
     output_data_path = Path(str(tmpdir))
@@ -301,11 +298,10 @@ def test_run_eapg_grouper(
         spark_app,
         input_dataframes,
         output_data_path,
-        path_logs_public=path_logs,
+        path_logs_error=path_logs,
     )
 
     assert (path_logs / 'error_log_0.txt').exists()
-    assert (path_logs / 'edit_log_0.txt').exists()
 
 
 def test__add_description_to_output(

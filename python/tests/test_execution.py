@@ -302,7 +302,6 @@ def test_run_eapg_grouper(
     )
 
     assert (path_logs / 'error_log_0.txt').exists()
-    assert (path_logs / 'edit_log_0.txt').exists()
 
 
 def test__add_description_to_output(

@@ -2,6 +2,11 @@
 
 A non-exhaustive list of what has changed in a more readable form than a commit history.
 
+### v1.1.0
+  - Addition of automated promotion processes with `promote_release.bat` and `promotion.py`.
+  - The `path_logs_public` parameter on `eapg.execution.run_eapg_grouper` has been changed to `path_logs_error`
+    - The edit logs are no longer populated as part of logging; if needed provide the desired log directory with the `edit_log` keyword argument.
+
 ### v1.0.2
   
   - In eapgs_out.csv , schema type for `claimedits` changed from `integer` to `string` to accommodate `claimedits` possible length of twenty characters.

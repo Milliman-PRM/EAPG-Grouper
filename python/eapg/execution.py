@@ -25,7 +25,7 @@ from prm.spark.app import SparkApp
 LOGGER = logging.getLogger(__name__)
 
 EAPG_VERSION = '17039'
-PATH_EAPG_GROUPER = Path(r'C:\Program Files\3mhis\v2017.1.2\cgs\cgs_console.exe')
+PATH_EAPG_GROUPER = Path(r'C:\ProgramData\3mhis\cgs\cgs_console.exe')
 
 PATH_TEMPLATES = eapg.shared.PATH_TEMPLATES
 PATH_INPUT_TEMPLATE = eapg.shared.PATH_INPUT_TEMPLATE

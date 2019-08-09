@@ -1,7 +1,9 @@
 ## Release Notes
 
 A non-exhaustive list of what has changed in a more readable form than a commit history.
-
+### v1.1.1
+  - Update path to account for the new default location of eapg grouper isntallations
+  
 ### v1.1.0
   - Addition of automated promotion processes with `promote_release.bat` and `promotion.py`.
   - The `path_logs_public` parameter on `eapg.execution.run_eapg_grouper` has been changed to `path_logs_error`
